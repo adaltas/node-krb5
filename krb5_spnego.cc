@@ -173,7 +173,7 @@ OM_uint32 Krb5Spnego::generate_spnego_token(std::string& server) {
   gss_release_name(&minor_status, &target_name);
   return 0;
 }
-
+#ifdef NODEJS
 /** NODE.JS Binding **/
 
 //A 'non' setter. V8 cannot bind getter without setter. We use this empty setter to avoid data modification
@@ -309,3 +309,4 @@ v8::Handle<Value> Krb5Spnego::GenTokenSync(const v8::Arguments& args) {
   else server_name = k->getRealm();
   return scope.Close(v8::Integer::New(k->generate_spnego_token(server_name)));
 }
+#endif

@@ -1,17 +1,17 @@
 #!/usr/bin/env coffee
 
 http = require 'http'
-Kerberos = require './index.js'
+Kerberos = require '../index.js'
 
 # Configuration
 user='pierre'
 realm='HADOOP.ADALTAS.COM'
 host='hadoop.adaltas.com'
 keytab=''
-passwd=''
+passwd= ''
 
 
-krb = new Kerberos ,hadoop_host
+krb = new Kerberos user,realm
 #krb.getCredentialsByKeytab keytab
 #krb.getCredentialsByPassword passwd
 

@@ -1,28 +1,16 @@
-#include "krb_spnego.h"
+#include "krb5_spnego.h"
 
 static gss_OID_desc _gss_mech_spnego = {6, (void*)"\x2b\x06\x01\x05\x05\x02"}; //Spnego OID: 1.3.6.1.5.5.2
 static const gss_OID GSS_MECH_SPNEGO= &_gss_mech_spnego; //gss_OID == gss_OID_desc*
 
-typedef struct krbCredBaton {
-  uv_work_t request;
-  v8::Persistent<v8::Function> callback;
-  KrbSpnego* wrapper;
-  //any other data that has to be sent
-  //to the callback or for async processing
-} krbCredBaton_t;
-
-//A 'non' setter. V8 cannot bind getter without setter. We use this empty setter to avoid data modification
-void nonSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info) {
-}
-
-std::string KrbSpnego::getSpnegoToken() {
+std::string Krb5Spnego::getSpnegoToken() {
   return this->spnego_token;
 }
-std::string KrbSpnego::getRealm() {
+std::string Krb5Spnego::getRealm() {
   return this->realm;
 }
 
-KrbSpnego::KrbSpnego(std::string& user, std::string& realm) {
+Krb5Spnego::Krb5Spnego(std::string& user, std::string& realm) {
   this->keytab=NULL;
   this->spnego_token="";
   this->realm = realm;
@@ -51,9 +39,10 @@ KrbSpnego::KrbSpnego(std::string& user, std::string& realm) {
   }
 }
 
-void KrbSpnego::krb5_cleanup(int level) {
+void Krb5Spnego::krb5_cleanup(int level) {
   switch(level) {
   default:
+  case 0:
   case 4:
     krb5_cc_close(this->context, this->cache);
   case 3:
@@ -61,23 +50,22 @@ void KrbSpnego::krb5_cleanup(int level) {
   case 2:
     krb5_free_context(this->context);
   case 1:
-  case 0:
     break;
   }
 }
 
 
-void KrbSpnego::krb5_error(int level, const char* mesg) {
+void Krb5Spnego::krb5_error(int level, const char* mesg) {
   std::cerr << level << " | " << mesg << std::endl;
   this->krb5_cleanup(level);
 }
 
 
-KrbSpnego::~KrbSpnego() {
+Krb5Spnego::~Krb5Spnego() {
   this->krb5_cleanup(NO_ERROR);
 }
 
-krb5_error_code KrbSpnego::krb5_get_credentials_by_keytab(std::string& keytabName) {
+krb5_error_code Krb5Spnego::krb5_get_credentials_by_keytab(std::string& keytabName) {
   krb5_error_code err;
   if(!keytabName.empty()) {
     std::string kt = "FILE:";
@@ -101,13 +89,13 @@ krb5_error_code KrbSpnego::krb5_get_credentials_by_keytab(std::string& keytabNam
 }
 
 
-krb5_error_code KrbSpnego::krb5_get_credentials_by_password(std::string& password) {
+krb5_error_code Krb5Spnego::krb5_get_credentials_by_password(std::string& password) {
   krb5_error_code err;
   if(password.empty()) {
     this->krb5_error(6,"No password\n");
     return -1;
   }
-  err = krb5_get_init_creds_password(this->context,this->cred,this->client_principal, password.c_str(), NULL, NULL, 0, NULL, NULL);
+  err = krb5_get_init_creds_password(this->context,this->cred,this->client_principal, (char *)password.c_str(), NULL, NULL, 0, NULL, NULL);
   if(err) {
     this->krb5_error(6,"credential error: using a password");
     return err;
@@ -118,7 +106,7 @@ krb5_error_code KrbSpnego::krb5_get_credentials_by_password(std::string& passwor
 ROUTINE:
 Sauvegarde du token + Initialisation GSS-API + release du token kerberos (inutile, puisqu'importé par GSS-API)
 */
-krb5_error_code KrbSpnego::krb5_finish_get_cred() {
+krb5_error_code Krb5Spnego::krb5_finish_get_cred() {
   krb5_error_code err;
   err = krb5_verify_init_creds(this->context,this->cred,NULL, NULL, NULL, NULL);
   if(err) {
@@ -136,7 +124,7 @@ krb5_error_code KrbSpnego::krb5_finish_get_cred() {
 }
 
 
-OM_uint32 KrbSpnego::import_name(OM_uint32* minor_status,std::string& server, gss_name_t* desired_name) {
+OM_uint32 Krb5Spnego::import_name(OM_uint32* minor_status,std::string& server, gss_name_t* desired_name) {
   OM_uint32 s,ret;
   gss_buffer_desc service;
   service.value = (char*)malloc(strlen("HTTP")+server.length()+2);
@@ -149,7 +137,7 @@ OM_uint32 KrbSpnego::import_name(OM_uint32* minor_status,std::string& server, gs
 /*
 Get the Base64-encoded token
 */
-OM_uint32 KrbSpnego::generate_spnego_token(std::string& server) {
+OM_uint32 Krb5Spnego::generate_spnego_token(std::string& server) {
   char token_buffer[2048];
   gss_ctx_id_t gss_context = GSS_C_NO_CONTEXT;
   gss_buffer_desc input_buf,output_buf;
@@ -160,14 +148,14 @@ OM_uint32 KrbSpnego::generate_spnego_token(std::string& server) {
 
   err=import_name(&minor_status,server,&target_name);
 
-  err=gss_krb5_import_cred(&minor_status, this->cache,this->client_principal, this->keytab, &this->gss_cred);
+//  err=gss_krb5_import_cred(&minor_status, this->cache,this->client_principal, this->keytab, &this->gss_cred);
 
   if(err) {
     this->krb5_error(8,"converting kerberos ticket in gss error");
     return err;
   }
 
-  err = gss_init_sec_context(&minor_status,this->gss_cred,
+  err = gss_init_sec_context(&minor_status,GSS_C_NO_CREDENTIAL,
                              &gss_context,
                              target_name,
                              GSS_MECH_SPNEGO,
@@ -187,34 +175,39 @@ OM_uint32 KrbSpnego::generate_spnego_token(std::string& server) {
 }
 
 /** NODE.JS Binding **/
-void KrbSpnego::Initialize(v8::Handle<v8::Object> target) {
+
+//A 'non' setter. V8 cannot bind getter without setter. We use this empty setter to avoid data modification
+void nonSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info) {
+}
+
+void Krb5Spnego::Initialize(v8::Handle<v8::Object> target) {
   v8::HandleScope scope; // used by v8 for garbage collection
   // Our constructor
-  v8::Local<FunctionTemplate> t = v8::FunctionTemplate::New(KrbSpnego::New);
+  v8::Local<FunctionTemplate> t = v8::FunctionTemplate::New(Krb5Spnego::New);
   t->InstanceTemplate()->SetInternalFieldCount(1);
-  t->SetClassName(v8::String::NewSymbol("KrbSpnego"));
+  t->SetClassName(v8::String::NewSymbol("Krb5Spnego"));
   // Our getters and setters
-  t->InstanceTemplate()->SetAccessor(String::New("token"), KrbSpnego::getToken, nonSetter);
+  t->InstanceTemplate()->SetAccessor(String::New("token"), Krb5Spnego::getToken, nonSetter);
 
   // Our methods async
-  NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByKeytab", KrbSpnego::ByKeyTab);
-  NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByPassword", KrbSpnego::ByPassword);
-  NODE_SET_PROTOTYPE_METHOD(t, "generateSpnegoToken", KrbSpnego::GenToken);
+  NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByKeytab", Krb5Spnego::ByKeyTab);
+  NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByPassword", Krb5Spnego::ByPassword);
+  NODE_SET_PROTOTYPE_METHOD(t, "generateSpnegoToken", Krb5Spnego::GenToken);
 
-  NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByKeytabSync", KrbSpnego::ByKeyTabSync);
-  NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByPasswordSync", KrbSpnego::ByPasswordSync);
-  NODE_SET_PROTOTYPE_METHOD(t, "generateSpnegoTokenSync", KrbSpnego::GenTokenSync);
+  NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByKeytabSync", Krb5Spnego::ByKeyTabSync);
+  NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByPasswordSync", Krb5Spnego::ByPasswordSync);
+  NODE_SET_PROTOTYPE_METHOD(t, "generateSpnegoTokenSync", Krb5Spnego::GenTokenSync);
 
 
-  KrbSpnego::tpl = v8::Persistent<v8::FunctionTemplate>::New(t);
+  Krb5Spnego::tpl = v8::Persistent<v8::FunctionTemplate>::New(t);
 
   // Binding our constructor function to the target variable
-  target->Set(String::NewSymbol("KrbSpnego"), t->GetFunction());
+  target->Set(String::NewSymbol("Krb5Spnego"), t->GetFunction());
 }
 
 // new Notification();
 // This is our constructor function. It instantiate a C++ Gtknotify object and returns a Javascript handle to this object.
-v8::Handle<Value> KrbSpnego::New(const v8::Arguments& args) {
+v8::Handle<Value> Krb5Spnego::New(const v8::Arguments& args) {
   HandleScope scope;
   if(args.Length()<2) {
     ThrowException(Exception::TypeError(String::New("Wrong number of arguments, please use new(user,realm)")));
@@ -225,7 +218,7 @@ v8::Handle<Value> KrbSpnego::New(const v8::Arguments& args) {
 
   std::string user= std::string(*v8user);
   std::string realm= std::string(*v8realm);
-  KrbSpnego* krb = new KrbSpnego(user,realm);
+  Krb5Spnego* krb = new Krb5Spnego(user,realm);
   // Wrap our C++ object as a Javascript object
   krb->Wrap(args.This());
   // Our constructor function returns a Javascript object which is a wrapper for our C++ object,
@@ -233,15 +226,15 @@ v8::Handle<Value> KrbSpnego::New(const v8::Arguments& args) {
   return args.This();
 }
 
-v8::Handle<v8::Value> KrbSpnego::getToken(Local<v8::String> property, const v8::AccessorInfo& info){
-  KrbSpnego* krb = node::ObjectWrap::Unwrap<KrbSpnego>(info.Holder());
+v8::Handle<v8::Value> Krb5Spnego::getToken(Local<v8::String> property, const v8::AccessorInfo& info){
+  Krb5Spnego* krb = node::ObjectWrap::Unwrap<Krb5Spnego>(info.Holder());
   return v8::String::New(krb->spnego_token.c_str());
 }
 
-v8::Handle<Value> KrbSpnego::ByPassword(const v8::Arguments& args) {
+v8::Handle<Value> Krb5Spnego::ByPassword(const v8::Arguments& args) {
   v8::HandleScope scope;
   // Extract C++ object reference from "this"
-  KrbSpnego* k = node::ObjectWrap::Unwrap<KrbSpnego>(args.This());
+  Krb5Spnego* k = node::ObjectWrap::Unwrap<Krb5Spnego>(args.This());
   std::string password;
   if(args.Length()==1){
     v8::String::Utf8Value v8pass(args[0]);
@@ -251,10 +244,10 @@ v8::Handle<Value> KrbSpnego::ByPassword(const v8::Arguments& args) {
   return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_password(password)));
 }
 
-v8::Handle<Value> KrbSpnego::ByKeyTab(const v8::Arguments& args) {
+v8::Handle<Value> Krb5Spnego::ByKeyTab(const v8::Arguments& args) {
   v8::HandleScope scope;
   // Extract C++ object reference from "this"
-  KrbSpnego* k = node::ObjectWrap::Unwrap<KrbSpnego>(args.This());
+  Krb5Spnego* k = node::ObjectWrap::Unwrap<Krb5Spnego>(args.This());
   std::string keytab_name;
   if(args.Length()==1){
     v8::String::Utf8Value v8kt(args[0]);
@@ -264,10 +257,10 @@ v8::Handle<Value> KrbSpnego::ByKeyTab(const v8::Arguments& args) {
   return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_keytab(keytab_name)));
 }
 
-v8::Handle<Value> KrbSpnego::GenToken(const v8::Arguments& args) {
+v8::Handle<Value> Krb5Spnego::GenToken(const v8::Arguments& args) {
   v8::HandleScope scope;
   // Extract C++ object reference from "this"
-  KrbSpnego* k = node::ObjectWrap::Unwrap<KrbSpnego>(args.This());
+  Krb5Spnego* k = node::ObjectWrap::Unwrap<Krb5Spnego>(args.This());
   std::string server_name;
   if(args.Length()==1){
     v8::String::Utf8Value v8server_name(args[0]);
@@ -278,10 +271,10 @@ v8::Handle<Value> KrbSpnego::GenToken(const v8::Arguments& args) {
 }
 
 
-v8::Handle<Value> KrbSpnego::ByPasswordSync(const v8::Arguments& args) {
+v8::Handle<Value> Krb5Spnego::ByPasswordSync(const v8::Arguments& args) {
   v8::HandleScope scope;
   // Extract C++ object reference from "this"
-  KrbSpnego* k = node::ObjectWrap::Unwrap<KrbSpnego>(args.This());
+  Krb5Spnego* k = node::ObjectWrap::Unwrap<Krb5Spnego>(args.This());
   std::string password;
   if(args.Length()==1){
     v8::String::Utf8Value v8pass(args[0]);
@@ -291,10 +284,10 @@ v8::Handle<Value> KrbSpnego::ByPasswordSync(const v8::Arguments& args) {
   return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_password(password)));
 }
 
-v8::Handle<Value> KrbSpnego::ByKeyTabSync(const v8::Arguments& args) {
+v8::Handle<Value> Krb5Spnego::ByKeyTabSync(const v8::Arguments& args) {
   v8::HandleScope scope;
   // Extract C++ object reference from "this"
-  KrbSpnego* k = node::ObjectWrap::Unwrap<KrbSpnego>(args.This());
+  Krb5Spnego* k = node::ObjectWrap::Unwrap<Krb5Spnego>(args.This());
   std::string keytab_name;
   if(args.Length()==1){
     v8::String::Utf8Value v8kt(args[0]);
@@ -304,10 +297,10 @@ v8::Handle<Value> KrbSpnego::ByKeyTabSync(const v8::Arguments& args) {
   return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_keytab(keytab_name)));
 }
 
-v8::Handle<Value> KrbSpnego::GenTokenSync(const v8::Arguments& args) {
+v8::Handle<Value> Krb5Spnego::GenTokenSync(const v8::Arguments& args) {
   v8::HandleScope scope;
   // Extract C++ object reference from "this"
-  KrbSpnego* k = node::ObjectWrap::Unwrap<KrbSpnego>(args.This());
+  Krb5Spnego* k = node::ObjectWrap::Unwrap<Krb5Spnego>(args.This());
   std::string server_name;
   if(args.Length()==1){
     v8::String::Utf8Value v8server_name(args[0]);

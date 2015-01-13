@@ -1,1 +1,1 @@
-module.exports = require('./build/Release/krb_spnego').KrbSpnego;
+module.exports = require('./build/Release/krb5_spnego').Krb5Spnego;

@@ -1,41 +1,35 @@
 #ifndef KRB_SPNEGO_H
-//Switch between binding and direct code
-#define NODEJS
-
 #define KRB_SPNEGO_H
 //std libs
 #include <iostream>
 #include <cstdio>
 #include <string>
 #include <string.h>
-#ifdef NODEJS
+#ifdef NODEGYP
 // V8/Node libs
 #include <v8.h>
 #include <uv.h>
 #include <node.h>
-#include <node_object_wrap.h>
+#include <node/node_object_wrap.h>
+#endif
 //Kerberos libs
 #include <krb5.h>
 #include <gssapi.h>
-#include <gssapi_krb5.h>
-#else
-//Kerberos libs
-#include <krb5.h>
-#include <gssapi/gssapi.h>
 #include <gssapi/gssapi_krb5.h>
-#endif
+
 
 //local libs
 #include "base64.h"
 
+
 #define NO_ERROR 0
 
-#ifdef NODEJS
+#ifdef NODEGYP
 using namespace v8;
 
-class Krb5Spnego : node::ObjectWrap {
+class Krb5 : node::ObjectWrap {
 #else
-class Krb5Spnego {
+class Krb5 {
 #endif
 private:
   std::string realm;
@@ -53,14 +47,14 @@ private:
 
 public:
   std::string getRealm();
-  Krb5Spnego(std::string& user, std::string& realm);
-  virtual ~Krb5Spnego();
+  Krb5(std::string& user, std::string& realm);
+  virtual ~Krb5();
   krb5_error_code krb5_get_credentials_by_keytab(std::string& keytabName);
   krb5_error_code krb5_get_credentials_by_password(std::string& password);
   OM_uint32 generate_spnego_token(std::string& server);
   std::string getSpnegoToken();
 
-  #ifdef NODEJS
+  #ifdef NODEGYP
   ///Binding
   static v8::Persistent<v8::FunctionTemplate> tpl;
   //library initialization
@@ -78,17 +72,17 @@ public:
   static v8::Handle<Value> New(const Arguments& args);
   #endif
 };
-#ifdef NODEJS
-v8::Persistent<FunctionTemplate> Krb5Spnego::tpl;
+#ifdef NODEGYP
+v8::Persistent<FunctionTemplate> Krb5::tpl;
 
 //boilerplate code
 
 extern "C" { // Cause of name mangling in C++, we use extern C here
   static void init(Handle<Object> target) {
-    Krb5Spnego::Initialize(target);
+    Krb5::Initialize(target);
   }
   // @see http://github.com/ry/node/blob/v0.2.0/src/node.h#L101
-  NODE_MODULE(krb5_spnego, init);
+  NODE_MODULE(krb5, init);
 }
-#endif //NODEJS
+#endif //NODEGYP
 #endif // KRB_SPNEGO_H

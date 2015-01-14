@@ -1,9 +1,6 @@
-#include "../krb5_spnego.h"
+#include "../krb5.h"
 
 using namespace std;
-
-// TO COMPILE THIS SAMPLE,
-//UNDEFINE NODEJS IN krb5_spnego.h
 
 int main()
 {
@@ -11,7 +8,7 @@ int main()
   string realm = "HADOOP.ADALTAS.COM";
   string server = "hadoop.adaltas.com";
   string password = "";
-  Krb5Spnego* k = new Krb5Spnego(user,realm);
+  Krb5* k = new Krb5(user,realm);
   k->krb5_get_credentials_by_password(password);
   k->generate_spnego_token(server);
   cout << "token : " << k->getSpnegoToken() << endl;

@@ -3,43 +3,50 @@
 static gss_OID_desc _gss_mech_spnego = {6, (void*)"\x2b\x06\x01\x05\x05\x02"}; //Spnego OID: 1.3.6.1.5.5.2
 static const gss_OID GSS_MECH_SPNEGO= &_gss_mech_spnego; //gss_OID == gss_OID_desc*
 
-std::string Krb5::getSpnegoToken() {
-  return this->spnego_token;
-}
-std::string Krb5::getRealm() {
-  return this->realm;
-}
-
-Krb5::Krb5(std::string& user, std::string& realm) {
-  this->keytab=NULL;
-  this->spnego_token="";
-  this->realm = realm;
-  krb5_error_code err=0;
-
-  if(realm.empty() || user.empty()) {
-    krb5_error(0,"params error\n");
+krb5_error_code Krb5::construct(const char* user, const char* realm){
+  if(!realm || !user){
+    this->err = -1;
+    return this->err;
   }
-  err = krb5_init_secure_context(&this->context);
-  if(err) {
-    this->krb5_error(1,"init secure context error\n");
+  int len_realm = strlen(realm);
+  int len_user = strlen(user);
+  if(!len_realm || !len_user) {
+    this->err = -1;
+    return this->err;
+  }
+  this->err = krb5_init_secure_context(&this->context);
+  if(this->err) {
+    return this->krb5_cleanup(1);
   }
   this->cred = (krb5_creds*)malloc(sizeof(krb5_creds));
   memset(this->cred, 0, sizeof(krb5_creds));
-  err = krb5_build_principal(this->context, &this->client_principal, realm.length(),realm.c_str(),user.c_str(),NULL);
-  if(err) {
-    this->krb5_error(2,"build Principal error\n");
+  this->err = krb5_build_principal(this->context, &this->client_principal, len_realm, realm, user, NULL);
+  if(this->err) {
+    return this->krb5_cleanup(2);
   }
-  err = krb5_cc_default(this->context, &this->cache);
-  if(err) {
-    this->krb5_error(3,"cache: no default cache\n");
+  this->err = krb5_cc_default(this->context, &this->cache);
+  if(this->err) {
+    return this->krb5_cleanup(3);
   }
-  err = krb5_cc_initialize(this->context, this->cache, this->client_principal);
-  if(err) {
-    this->krb5_error(4,"cache: initialization error\n");
+  this->err = krb5_cc_initialize(this->context, this->cache, this->client_principal);
+  if(this->err) {
+    return this->krb5_cleanup(4);
   }
+  return this->err;
 }
 
-void Krb5::krb5_cleanup(int level) {
+Krb5::Krb5(const char* user, const char* realm) {
+  this->keytab=NULL;
+  this->spnego_token=NULL;
+  if(realm){
+    this->realm = (char*)malloc(strlen(realm));
+    strcpy(this->realm,realm);
+  }
+  this->err=0;
+  this->construct(user,realm);
+}
+
+krb5_error_code Krb5::krb5_cleanup(int level) {
   switch(level) {
   default:
   case 0:
@@ -52,110 +59,102 @@ void Krb5::krb5_cleanup(int level) {
   case 1:
     break;
   }
+  return this->err;
 }
-
-
-void Krb5::krb5_error(int level, const char* mesg) {
-  std::cerr << level << " | " << mesg << std::endl;
-  this->krb5_cleanup(level);
-}
-
 
 Krb5::~Krb5() {
   this->krb5_cleanup(NO_ERROR);
 }
 
-krb5_error_code Krb5::krb5_get_credentials_by_keytab(std::string& keytabName) {
-  krb5_error_code err;
-  if(!keytabName.empty()) {
-    std::string kt = "FILE:";
-    kt+=realpath(keytabName.c_str(),NULL);
-    err = krb5_kt_resolve(context, kt.c_str(), &this->keytab);
+krb5_error_code Krb5::krb5_get_credentials_by_keytab(const char* keytabName) {
+  char kt[2048];
+  if(!this->err){
+    if(keytabName){
+      int len = strlen(keytabName);
+      if(len) {
+        strcpy(kt,"FILE:");
+        strcat(kt,realpath(keytabName,NULL));
+        this->err = krb5_kt_resolve(this->context, kt, &this->keytab);
+      }
+      else {
+        this->err = krb5_kt_default(this->context,&keytab);
+      }
+    }
+    //SI le path n'est pas précisé, on récupère la keytab par défaut
+    else {
+      this->err = krb5_kt_default(this->context,&keytab);
+    }
+    if(this->err) {
+      return this->krb5_cleanup(5);
+    }
+    this->err = krb5_get_init_creds_keytab(context, cred, client_principal, keytab, 0, NULL, NULL);
+    if(this->err) {
+      return this->krb5_cleanup(6);
+    }
+    this->krb5_finish_get_cred();
   }
-  //SI le path n'est pas précisé, on récupère la keytab par défaut
-  else {
-    err = krb5_kt_default(context,&keytab);
-  }
-  if(err) {
-    this->krb5_error(5, "keytab not valid");
-    return err;
-  }
-  err = krb5_get_init_creds_keytab(context, cred, client_principal, keytab, 0, NULL, NULL);
-  if(err) {
-    this->krb5_error(6,"credential error: using a keytab");
-    return err;
-  }
-  return this->krb5_finish_get_cred();
+  return this->err;
 }
 
 
-krb5_error_code Krb5::krb5_get_credentials_by_password(std::string& password) {
-  krb5_error_code err;
-  if(password.empty()) {
-    this->krb5_error(6,"No password\n");
-    return -1;
+krb5_error_code Krb5::krb5_get_credentials_by_password(const char* password) {
+  if(!this->err){
+    this->err = krb5_get_init_creds_password(this->context,this->cred,this->client_principal,password, NULL, NULL, 0, NULL, NULL);
+    if(this->err) {
+      this->krb5_cleanup(6);
+      return this->err;
+    }
+    this->krb5_finish_get_cred();
   }
-  err = krb5_get_init_creds_password(this->context,this->cred,this->client_principal, (char *)password.c_str(), NULL, NULL, 0, NULL, NULL);
-  if(err) {
-    this->krb5_error(6,"credential error: using a password");
-    return err;
-  }
-  return this->krb5_finish_get_cred();
+  return this->err;
 }
 /*
 ROUTINE:
 Sauvegarde du token + Initialisation GSS-API + release du token kerberos (inutile, puisqu'importé par GSS-API)
 */
 krb5_error_code Krb5::krb5_finish_get_cred() {
-  krb5_error_code err;
-  err = krb5_verify_init_creds(this->context,this->cred,NULL, NULL, NULL, NULL);
-  if(err) {
+  this->err = krb5_verify_init_creds(this->context,this->cred,NULL, NULL, NULL, NULL);
+  if(this->err) {
     krb5_free_creds(this->context,this->cred);
-    this->krb5_error(6,"credential error: verification failed");
-    return err;
+    this->krb5_cleanup(6);
+    return this->err;
   }
-  err = krb5_cc_store_cred(this->context, this->cache, this->cred);
-  if(err) {
+  this->err = krb5_cc_store_cred(this->context, this->cache, this->cred);
+  if(this->err) {
     krb5_free_creds(this->context,this->cred);
-    this->krb5_error(6,"credentials cache error");
-    return err;
+    this->krb5_cleanup(6);
+    return this->err;
   }
-  return 0;
+  return this->err;
 }
 
 
-OM_uint32 Krb5::import_name(OM_uint32* minor_status,std::string& server, gss_name_t* desired_name) {
-  OM_uint32 s,ret;
+OM_uint32 Krb5::import_name(const char* principal, gss_name_t* desired_name) {
+  OM_uint32 ret;
   gss_buffer_desc service;
-  service.value = (char*)malloc(strlen("HTTP")+server.length()+2);
-  snprintf((char*)service.value,strlen("HTTP")+server.length()+2,"%s@%s","HTTP",server.c_str());
-  service.length = strlen((char*)service.value);
-  ret=gss_import_name(minor_status, &service,GSS_C_NT_HOSTBASED_SERVICE, desired_name);
-  gss_release_buffer(&s,&service);
+  service.length = strlen(principal);
+  service.value = (char*)principal;
+  ret=gss_import_name((OM_uint32*)&this->err, &service,GSS_C_NT_HOSTBASED_SERVICE, desired_name);
   return ret;
 }
 /*
 Get the Base64-encoded token
 */
-OM_uint32 Krb5::generate_spnego_token(std::string& server) {
+OM_uint32 Krb5::generate_spnego_token(const char* server) {
   char token_buffer[2048];
   gss_ctx_id_t gss_context = GSS_C_NO_CONTEXT;
   gss_buffer_desc input_buf,output_buf;
 
   gss_name_t target_name;
-  OM_uint32 minor_status;
-  OM_uint32 err=0;
+  OM_uint32 err;
 
-  err=import_name(&minor_status,server,&target_name);
-
-//  err=gss_krb5_import_cred(&minor_status, this->cache,this->client_principal, this->keytab, &this->gss_cred);
-
+  err = import_name(server,&target_name);
   if(err) {
-    this->krb5_error(8,"converting kerberos ticket in gss error");
-    return err;
+    return this->krb5_cleanup(8);
   }
 
-  err = gss_init_sec_context(&minor_status,GSS_C_NO_CREDENTIAL,
+  err = gss_init_sec_context((OM_uint32*)&this->err,
+                             GSS_C_NO_CREDENTIAL,
                              &gss_context,
                              target_name,
                              GSS_MECH_SPNEGO,
@@ -169,8 +168,12 @@ OM_uint32 Krb5::generate_spnego_token(std::string& server) {
                              NULL);
 
   encode64((char*)output_buf.value,token_buffer,output_buf.length);
-  this->spnego_token = (char*)token_buffer;
-  gss_release_name(&minor_status, &target_name);
+  if(this->spnego_token){
+    free(this->spnego_token);
+  }
+  this->spnego_token = (char*) malloc(strlen(token_buffer)+1);
+  strcpy(this->spnego_token,token_buffer);
+  gss_release_name((OM_uint32*)&this->err, &target_name);
   return 0;
 }
 #ifdef NODEGYP
@@ -188,12 +191,14 @@ void Krb5::Initialize(v8::Handle<v8::Object> target) {
   t->SetClassName(v8::String::NewSymbol("Krb5"));
   // Our getters and setters
   t->InstanceTemplate()->SetAccessor(String::New("token"), Krb5::getToken, nonSetter);
+  t->InstanceTemplate()->SetAccessor(String::New("err"), Krb5::getErr, nonSetter);
 
   // Our methods async
   NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByKeytab", Krb5::ByKeyTab);
   NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByPassword", Krb5::ByPassword);
   NODE_SET_PROTOTYPE_METHOD(t, "generateSpnegoToken", Krb5::GenToken);
 
+  //
   NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByKeytabSync", Krb5::ByKeyTabSync);
   NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByPasswordSync", Krb5::ByPasswordSync);
   NODE_SET_PROTOTYPE_METHOD(t, "generateSpnegoTokenSync", Krb5::GenTokenSync);
@@ -205,7 +210,6 @@ void Krb5::Initialize(v8::Handle<v8::Object> target) {
   target->Set(String::NewSymbol("Krb5"), t->GetFunction());
 }
 
-// new Notification();
 // This is our constructor function. It instantiate a C++ Gtknotify object and returns a Javascript handle to this object.
 v8::Handle<Value> Krb5::New(const v8::Arguments& args) {
   HandleScope scope;
@@ -216,97 +220,77 @@ v8::Handle<Value> Krb5::New(const v8::Arguments& args) {
   v8::String::Utf8Value v8user(args[0]);
   v8::String::Utf8Value v8realm(args[1]);
 
-  std::string user= std::string(*v8user);
-  std::string realm= std::string(*v8realm);
-  Krb5* krb = new Krb5(user,realm);
+  Krb5* krb = new Krb5(*v8user,*v8realm);
   // Wrap our C++ object as a Javascript object
   krb->Wrap(args.This());
   // Our constructor function returns a Javascript object which is a wrapper for our C++ object,
   // This is the expected behavior when calling a constructor function with the new operator in Javascript.
   return args.This();
 }
-
+/** GETTER **/
 v8::Handle<v8::Value> Krb5::getToken(Local<v8::String> property, const v8::AccessorInfo& info){
   Krb5* krb = node::ObjectWrap::Unwrap<Krb5>(info.Holder());
-  return v8::String::New(krb->spnego_token.c_str());
+  return v8::String::New(krb->spnego_token);
+}
+
+v8::Handle<v8::Value> Krb5::getErr(Local<v8::String> property, const v8::AccessorInfo& info){
+  Krb5* krb = node::ObjectWrap::Unwrap<Krb5>(info.Holder());
+  return v8::String::New(krb5_get_error_message(krb->context,krb->err));
+}
+
+
+/** ASYNC Mode (TODO)  **/
+v8::Handle<Value> Krb5::GenToken(const v8::Arguments& args) {
+  return Krb5::GenTokenSync(args);
 }
 
 v8::Handle<Value> Krb5::ByPassword(const v8::Arguments& args) {
-  v8::HandleScope scope;
-  // Extract C++ object reference from "this"
-  Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
-  std::string password;
-  if(args.Length()==1){
-    v8::String::Utf8Value v8pass(args[0]);
-    password = std::string(*v8pass);
-  }
-  else password = "";
-  return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_password(password)));
+  return Krb5::ByPasswordSync(args);
 }
 
 v8::Handle<Value> Krb5::ByKeyTab(const v8::Arguments& args) {
-  v8::HandleScope scope;
-  // Extract C++ object reference from "this"
-  Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
-  std::string keytab_name;
-  if(args.Length()==1){
-    v8::String::Utf8Value v8kt(args[0]);
-    keytab_name = std::string(*v8kt);
-  }
-  else keytab_name = "";
-  return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_keytab(keytab_name)));
+  return Krb5::ByKeyTabSync(args);
 }
 
-v8::Handle<Value> Krb5::GenToken(const v8::Arguments& args) {
-  v8::HandleScope scope;
-  // Extract C++ object reference from "this"
-  Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
-  std::string server_name;
-  if(args.Length()==1){
-    v8::String::Utf8Value v8server_name(args[0]);
-    server_name = std::string(*v8server_name);
-  }
-  else server_name = k->getRealm();
-  return scope.Close(v8::Integer::New(k->generate_spnego_token(server_name)));
-}
-
+/** SYNC Mode **/
 
 v8::Handle<Value> Krb5::ByPasswordSync(const v8::Arguments& args) {
   v8::HandleScope scope;
   // Extract C++ object reference from "this"
   Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
-  std::string password;
-  if(args.Length()==1){
+  if(args.Length()>=1){
     v8::String::Utf8Value v8pass(args[0]);
-    password = std::string(*v8pass);
+    return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_password(*v8pass)));
   }
-  else password = "";
-  return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_password(password)));
+  else{
+    ThrowException(Exception::TypeError(String::New("Wrong number of arguments, please add server_principal")));
+    return scope.Close(v8::Integer::New(-1));
+  }
 }
 
 v8::Handle<Value> Krb5::ByKeyTabSync(const v8::Arguments& args) {
   v8::HandleScope scope;
   // Extract C++ object reference from "this"
   Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
-  std::string keytab_name;
-  if(args.Length()==1){
+  if(args.Length()>=1){
     v8::String::Utf8Value v8kt(args[0]);
-    keytab_name = std::string(*v8kt);
+    return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_keytab(*v8kt)));
   }
-  else keytab_name = "";
-  return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_keytab(keytab_name)));
+  return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_keytab(0)));
 }
 
 v8::Handle<Value> Krb5::GenTokenSync(const v8::Arguments& args) {
   v8::HandleScope scope;
   // Extract C++ object reference from "this"
   Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
-  std::string server_name;
   if(args.Length()==1){
     v8::String::Utf8Value v8server_name(args[0]);
-    server_name = std::string(*v8server_name);
+    return scope.Close(v8::Integer::New(k->generate_spnego_token(*v8server_name)));
   }
-  else server_name = k->getRealm();
-  return scope.Close(v8::Integer::New(k->generate_spnego_token(server_name)));
+  else{
+    ThrowException(Exception::TypeError(String::New("Wrong number of arguments, please add server_principal")));
+    return scope.Close(v8::Integer::New(-1));
+  }
 }
+
 #endif

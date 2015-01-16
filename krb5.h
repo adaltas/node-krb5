@@ -46,12 +46,12 @@ public:
   krb5_error_code err;
   char* spnego_token;
   Krb5();
-  Krb5(const char* user, const char* realm, const char* cache=NULL);
-  krb5_error_code construct(const char* user, const char* realm, const char* cache_path=NULL);
+  krb5_error_code init(const char* user, const char* realm);
   virtual ~Krb5();
   krb5_error_code get_credentials_by_keytab(const char* keytab=NULL);
   krb5_error_code get_credentials_by_password(const char* principal);
   OM_uint32 generate_spnego_token(const char* server);
+  const char* get_error_message();
 
   #ifdef NODEGYP
   ///Binding
@@ -64,12 +64,12 @@ public:
   static v8::Handle<v8::Value> getErr(Local<v8::String> property, const v8::AccessorInfo& info);
 
   //async bindings
-  static v8::Handle<Value> Construct(const v8::Arguments& args);
+  static v8::Handle<Value> Init(const v8::Arguments& args);
   static v8::Handle<Value> ByPassword(const v8::Arguments& args);
   static v8::Handle<Value> ByKeyTab(const v8::Arguments& args);
   static v8::Handle<Value> GenToken(const v8::Arguments& args);
   //sync bindings
-  static v8::Handle<Value> ConstructSync(const v8::Arguments& args);
+  static v8::Handle<Value> InitSync(const v8::Arguments& args);
   static v8::Handle<Value> ByPasswordSync(const v8::Arguments& args);
   static v8::Handle<Value> ByKeyTabSync(const v8::Arguments& args);
   static v8::Handle<Value> GenTokenSync(const v8::Arguments& args);
@@ -95,11 +95,11 @@ v8::Persistent<FunctionTemplate> Krb5::tpl;
 //boilerplate code
 
 extern "C" { // Cause of name mangling in C++, we use extern C here
-  static void init(Handle<Object> target) {
+  static void __init(Handle<Object> target) {
     Krb5::Initialize(target);
   }
   // @see http://github.com/ry/node/blob/v0.2.0/src/node.h#L101
-  NODE_MODULE(krb5, init);
+  NODE_MODULE(krb5, __init);
 }
 #endif //NODEGYP
 #endif // KRB_SPNEGO_H

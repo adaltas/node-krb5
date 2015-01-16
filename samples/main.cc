@@ -10,7 +10,7 @@ using namespace std;
 int main()
 {
   Krb5* k = new Krb5();
-  k->construct(USER,REALM);
+  k->init(USER,REALM);
   k->get_credentials_by_password(PASSWD);
   k->generate_spnego_token(SERVER);
   cout << "error code: " << k->err << endl;

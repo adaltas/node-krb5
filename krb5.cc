@@ -3,7 +3,7 @@
 static gss_OID_desc _gss_mech_spnego = {6, (void*)"\x2b\x06\x01\x05\x05\x02"}; //Spnego OID: 1.3.6.1.5.5.2
 static const gss_OID GSS_MECH_SPNEGO= &_gss_mech_spnego; //gss_OID == gss_OID_desc*
 
-krb5_error_code Krb5::construct(const char* user, const char* realm){
+krb5_error_code Krb5::construct(const char* user, const char* realm, const char *cache){
   if(!realm || !user){
     this->err = -1;
     return this->err;
@@ -35,15 +35,17 @@ krb5_error_code Krb5::construct(const char* user, const char* realm){
   return this->err;
 }
 
-Krb5::Krb5(const char* user, const char* realm) {
+Krb5::Krb5(){
   this->keytab=NULL;
   this->spnego_token=NULL;
-  if(realm){
-    this->realm = (char*)malloc(strlen(realm));
-    strcpy(this->realm,realm);
-  }
   this->err=0;
-  this->construct(user,realm);
+}
+
+Krb5::Krb5(const char* user, const char* realm, const char* cache) {
+  this->keytab=NULL;
+  this->spnego_token=NULL;
+  this->err=0;
+  this->construct(user, realm, cache);
 }
 
 krb5_error_code Krb5::krb5_cleanup(int level) {
@@ -66,7 +68,7 @@ Krb5::~Krb5() {
   this->krb5_cleanup(NO_ERROR);
 }
 
-krb5_error_code Krb5::krb5_get_credentials_by_keytab(const char* keytabName) {
+krb5_error_code Krb5::get_credentials_by_keytab(const char* keytabName) {
   char kt[2048];
   if(!this->err){
     if(keytabName){
@@ -97,7 +99,7 @@ krb5_error_code Krb5::krb5_get_credentials_by_keytab(const char* keytabName) {
 }
 
 
-krb5_error_code Krb5::krb5_get_credentials_by_password(const char* password) {
+krb5_error_code Krb5::get_credentials_by_password(const char* password) {
   if(!this->err){
     this->err = krb5_get_init_creds_password(this->context,this->cred,this->client_principal,password, NULL, NULL, 0, NULL, NULL);
     if(this->err) {
@@ -179,6 +181,27 @@ OM_uint32 Krb5::generate_spnego_token(const char* server) {
 #ifdef NODEGYP
 /** NODE.JS Binding **/
 
+template<typename T>
+UvBaton<T>::UvBaton(const v8::Arguments& args){
+  this->request.data = this;
+  this->wrapper = node::ObjectWrap::Unwrap<T>(args.This());
+  this->length = args.Length()-1;
+  this->callback = Persistent<Function>::New(Handle<Function>::Cast(args[0]));
+  this->args = (char**)malloc(this->length*sizeof(char*));
+  for(unsigned int i=0; i< this->length; i++){
+    v8::String::Utf8Value params(args[i+1]->ToString());
+    this->args[i] = (char*)malloc(strlen(*params));
+    strcpy(this->args[i],*params);
+  }
+}
+template<typename T>
+UvBaton<T>::~UvBaton(){
+  for(unsigned int i=0; i<this->length; i++){
+    free(this->args[i]);
+  }
+  free(this->args);
+  this->callback.Dispose();
+}
 //A 'non' setter. V8 cannot bind getter without setter. We use this empty setter to avoid data modification
 void nonSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info) {
 }
@@ -194,11 +217,13 @@ void Krb5::Initialize(v8::Handle<v8::Object> target) {
   t->InstanceTemplate()->SetAccessor(String::New("err"), Krb5::getErr, nonSetter);
 
   // Our methods async
+  NODE_SET_PROTOTYPE_METHOD(t, "init", Krb5::Construct);
   NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByKeytab", Krb5::ByKeyTab);
   NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByPassword", Krb5::ByPassword);
   NODE_SET_PROTOTYPE_METHOD(t, "generateSpnegoToken", Krb5::GenToken);
 
   //
+  NODE_SET_PROTOTYPE_METHOD(t, "initSync", Krb5::ConstructSync);
   NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByKeytabSync", Krb5::ByKeyTabSync);
   NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByPasswordSync", Krb5::ByPasswordSync);
   NODE_SET_PROTOTYPE_METHOD(t, "generateSpnegoTokenSync", Krb5::GenTokenSync);
@@ -212,15 +237,7 @@ void Krb5::Initialize(v8::Handle<v8::Object> target) {
 
 // This is our constructor function. It instantiate a C++ Gtknotify object and returns a Javascript handle to this object.
 v8::Handle<Value> Krb5::New(const v8::Arguments& args) {
-  HandleScope scope;
-  if(args.Length()<2) {
-    ThrowException(Exception::TypeError(String::New("Wrong number of arguments, please use new(user,realm)")));
-    return scope.Close(Undefined());
-  }
-  v8::String::Utf8Value v8user(args[0]);
-  v8::String::Utf8Value v8realm(args[1]);
-
-  Krb5* krb = new Krb5(*v8user,*v8realm);
+  Krb5* krb = new Krb5();
   // Wrap our C++ object as a Javascript object
   krb->Wrap(args.This());
   // Our constructor function returns a Javascript object which is a wrapper for our C++ object,
@@ -238,33 +255,113 @@ v8::Handle<v8::Value> Krb5::getErr(Local<v8::String> property, const v8::Accesso
   return v8::String::New(krb5_get_error_message(krb->context,krb->err));
 }
 
-
 /** ASYNC Mode (TODO)  **/
+
+void GenTokenAsync(uv_work_t *request){
+  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
+  baton->wrapper->generate_spnego_token(baton->args[0]);
+}
+
+void GenTokenAfter(uv_work_t *request, int status){
+  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
+  Krb5* k = baton->wrapper;
+  if(k->err){
+    Handle<Value> argv[2] = {Local<Value>::New(String::New(krb5_get_error_message(k->context,k->err))),v8::Null()};
+    baton->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+  }
+  else{
+    Handle<Value> argv[2] = {v8::Null(),Local<Value>::New(String::New(k->spnego_token))};
+    baton->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+  }
+  delete baton;
+}
+
+void ConstructAsync(uv_work_t *request){
+  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
+  if(baton->length>=3){
+    baton->wrapper->construct(baton->args[0], baton->args[1], baton->args[2]);
+  }
+  else{
+    baton->wrapper->construct(baton->args[0], baton->args[1]);
+  }
+}
+
+void SendErrorAfter(uv_work_t *request, int status){
+  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
+  Handle<Value> argv[1];
+  Krb5* k = baton->wrapper;
+  if(k->err){
+    argv[0] = Local<Value>::New(String::New(krb5_get_error_message(k->context,k->err)));
+  }
+  else{
+    argv[0] = v8::Null();
+  }
+  baton->callback->Call(Context::GetCurrent()->Global(), 1, argv);
+  delete baton;
+}
+
+
+void ByPasswordAsync(uv_work_t *request){
+  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
+  baton->wrapper->get_credentials_by_password(baton->args[0]);
+}
+
+void ByKeytabAsync(uv_work_t *request){
+  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
+  if(baton->length>=1){
+    baton->wrapper->get_credentials_by_keytab(baton->args[0]);
+  }
+  else{
+    baton->wrapper->get_credentials_by_keytab();
+  }
+}
+
+v8::Handle<Value> AsyncFunction(const v8::Arguments& args, uv_work_cb asyncFunction, uv_after_work_cb afterFunction){
+  UvBaton<Krb5>* baton = new UvBaton<Krb5>(args);
+  uv_queue_work(uv_default_loop(), &baton->request, asyncFunction, afterFunction);
+  return Undefined();
+}
+
+
 v8::Handle<Value> Krb5::GenToken(const v8::Arguments& args) {
-  return Krb5::GenTokenSync(args);
+  return AsyncFunction(args, GenTokenAsync, GenTokenAfter);
+}
+
+v8::Handle<Value> Krb5::Construct(const v8::Arguments& args) {
+  return AsyncFunction(args, ConstructAsync,SendErrorAfter);
 }
 
 v8::Handle<Value> Krb5::ByPassword(const v8::Arguments& args) {
-  return Krb5::ByPasswordSync(args);
+  return AsyncFunction(args, ByPasswordAsync,SendErrorAfter);
 }
 
 v8::Handle<Value> Krb5::ByKeyTab(const v8::Arguments& args) {
-  return Krb5::ByKeyTabSync(args);
+  return AsyncFunction(args, ByKeytabAsync, SendErrorAfter);
 }
 
 /** SYNC Mode **/
 
+v8::Handle<Value> Krb5::ConstructSync(const v8::Arguments& args) {
+  Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
+  v8::String::Utf8Value v8user(args[0]);
+  v8::String::Utf8Value v8realm(args[1]);
+  if(args.Length()>=3){
+    v8::String::Utf8Value v8path(args[2]);
+    return v8::Integer::New(k->construct(*v8user,*v8realm,*v8path));
+  }
+  return v8::Integer::New(k->construct(*v8user,*v8realm));
+}
+
 v8::Handle<Value> Krb5::ByPasswordSync(const v8::Arguments& args) {
-  v8::HandleScope scope;
   // Extract C++ object reference from "this"
   Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
   if(args.Length()>=1){
     v8::String::Utf8Value v8pass(args[0]);
-    return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_password(*v8pass)));
+    return v8::Integer::New(k->get_credentials_by_password(*v8pass));
   }
   else{
     ThrowException(Exception::TypeError(String::New("Wrong number of arguments, please add server_principal")));
-    return scope.Close(v8::Integer::New(-1));
+    return v8::Integer::New(-1);
   }
 }
 
@@ -274,9 +371,9 @@ v8::Handle<Value> Krb5::ByKeyTabSync(const v8::Arguments& args) {
   Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
   if(args.Length()>=1){
     v8::String::Utf8Value v8kt(args[0]);
-    return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_keytab(*v8kt)));
+    return scope.Close(v8::Integer::New(k->get_credentials_by_keytab(*v8kt)));
   }
-  return scope.Close(v8::Integer::New(k->krb5_get_credentials_by_keytab(0)));
+  return scope.Close(v8::Integer::New(k->get_credentials_by_keytab(NULL)));
 }
 
 v8::Handle<Value> Krb5::GenTokenSync(const v8::Arguments& args) {

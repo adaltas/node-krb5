@@ -7,29 +7,173 @@
   module.exports = function(obj, next) {
     var k, realm, toto, user, _ref;
     if (typeof obj !== 'object') {
-      return next('Params: Not an object');
+      return next(new Error('Params: Not an object'));
     }
-    if (obj.user_principal == null) {
-      return next('Params: Please set user_principal property');
+    if (obj.client_principal == null) {
+      return next(new Error('Params: Please set client_principal property'));
     }
-    if (!obj.user_principal.match(/[A-Za-z0-9_\-\/]*@[A-Za-z0-9_\-\.]*/)) {
-      return next('Params: user_principal is unvalid, please use ID@REALM');
+    if (!obj.client_principal.match(/[A-Za-z0-9_\-\/]*@[A-Za-z0-9_\-\.]*/)) {
+      return next(new Error('Params: client_principal is unvalid, please use ID@REALM'));
     }
     if (obj.service_principal == null) {
-      return next('Params: please set service_principal property');
+      return next(new Error('Params: please set service_principal property'));
     }
     if (!obj.service_principal.match(/[A-Za-z0-9_\-\/]*@[A-Za-z0-9_\-\.]*/)) {
-      return next('Params: service_principal is unvalid, please use ID@REALM');
+      return next(new Error('Params: service_principal is unvalid, please use ID@REALM'));
     }
-    _ref = obj.user_principal.split('@'), user = _ref[0], realm = _ref[1];
-    k = new krb5.Krb5(user, realm);
+    k = new krb5.Krb5;
+    _ref = obj.client_principal.split('@'), user = _ref[0], realm = _ref[1];
+    if (obj.cc_file != null) {
+      process.env.KRB5CCNAME = "FILE:" + obj.cc_file;
+      k.initSync(user, realm, obj.cc_file);
+    } else if (obj.cc_dir != null) {
+      process.env.KRB5CCNAME = "DIR:" + obj.cc_dir;
+      k.initSync(user, realm, obj.cc_dir);
+    } else {
+      k.initSync(user, realm);
+    }
     if (obj.user_password) {
       k.getCredentialsByPasswordSync(obj.user_password);
     } else {
       k.getCredentialsByKeytabSync(obj.user_keytab);
     }
     toto = k.generateSpnegoTokenSync(obj.service_principal);
-    return next(k.err, k.token);
+    return next(new Error(k.err), k.token);
+  };
+
+  module.exports.Krb5 = function(obj) {
+    var k, self;
+    self = this;
+    k = new krb5.Krb5;
+    this.kinitSync = function(obj) {
+      var realm, user, _ref;
+      if (obj != null) {
+        if (obj.client_principal != null) {
+          self.client_principal = obj.client_principal;
+        }
+        if (obj.password != null) {
+          self.password = obj.password;
+        }
+        if (obj.keytab != null) {
+          self.keytab = obj.keytab;
+        }
+        if (obj.cc_file != null) {
+          self.cc_path = obj.cc_file;
+          self.cc_type = "FILE";
+        } else if (obj.cc_dir != null) {
+          self.cc_path = obj.cc_dir;
+          self.cc_type = "DIR";
+        }
+      }
+      if (self.client_principal == null) {
+        throw new Error('client_principal not set');
+      }
+      _ref = self.client_principal.split('@'), user = _ref[0], realm = _ref[1];
+      if ((self.cc_type != null) && (this.cc_path != null)) {
+        process.env.KRB5CCNAME = "" + this.cc_type + ":" + this.cc_path;
+        k.initSync(user, realm, this.cc_path);
+      } else {
+        k.initSync(user, realm);
+      }
+      if (self.password != null) {
+        return k.getCredentialsByPasswordSync(self.password);
+      } else if (self.keytab != null) {
+        return k.getCredentialsByKeytabSync(self.keytab);
+      } else {
+        return k.getCredentialsByKeytabSync;
+      }
+    };
+    this.kinit = function(obj, next) {
+      var realm, user, __next, _ref;
+      if (typeof obj === 'function') {
+        next = obj;
+        obj = null;
+      }
+      if (obj != null) {
+        if (obj.client_principal != null) {
+          self.client_principal = obj.client_principal;
+        }
+        if (obj.password != null) {
+          self.password = obj.password;
+        }
+        if (obj.keytab != null) {
+          self.keytab = obj.keytab;
+        }
+        if (obj.cc_file != null) {
+          self.cc_path = obj.cc_file;
+          self.cc_type = "FILE";
+        } else if (obj.cc_dir != null) {
+          self.cc_path = obj.cc_dir;
+          self.cc_type = "DIR";
+        }
+      }
+      if (self.client_principal == null) {
+        return next(new Error('client_principal not set'));
+      }
+      _ref = self.client_principal.split('@'), user = _ref[0], realm = _ref[1];
+      __next = function(err) {
+        if (self.password != null) {
+          return k.getCredentialsByPassword(next, self.password);
+        } else if (self.keytab != null) {
+          return k.getCredentialsByKeytab(next, self.keytab);
+        } else {
+          return k.getCredentialsByKeytabSync(next);
+        }
+      };
+      if ((self.cc_type != null) && (self.cc_path != null)) {
+        process.env.KRB5CCNAME = "" + this.cc_type + ":" + this.cc_path;
+        return k.init(__next, user, realm, cc_path);
+      } else {
+        return k.init(__next, user, realm);
+      }
+    };
+    this.tokenSync = function(host) {
+      if (host != null) {
+        k.generateSpnegoTokenSync(host);
+      } else if (this.service_principal != null) {
+        k.generateSpnegoTokenSync(this.service_principal);
+      } else {
+        throw new Error('please specify host');
+      }
+      return k.token;
+    };
+    this.token = function(host, next) {
+      if ((host != null) && (next == null) && typeof host === 'function') {
+        next = host;
+        host = null;
+      }
+      if (host != null) {
+        return k.generateSpnegoToken(next, host);
+      } else if (this.service_principal != null) {
+        return k.generateSpnegoToken(next, this.service_principal);
+      } else {
+        return next(new Error('please specify host'));
+      }
+    };
+    if (obj && typeof obj !== 'object') {
+      throw new Error('Parameter error');
+    }
+    if (obj != null) {
+      if (obj.client_principal != null) {
+        this.client_principal = obj.client_principal;
+      }
+      if (obj.password != null) {
+        this.password = obj.password;
+      }
+      if (obj.keytab != null) {
+        this.keytab = obj.keytab;
+      }
+      if (obj.service_principal != null) {
+        this.service_principal = obj.service_principal;
+      }
+      if (obj.cc_file != null) {
+        this.cc_path = obj.cc_file;
+        return this.cc_type = "FILE";
+      } else if (obj.cc_dir != null) {
+        this.cc_path = obj.cc_dir;
+        return this.cc_type = "DIR";
+      }
+    }
   };
 
 }).call(this);

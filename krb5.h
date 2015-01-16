@@ -32,25 +32,25 @@ class Krb5 {
 #endif
 private:
   bool renew;
-  krb5_context context;
   krb5_keytab keytab;
   krb5_ccache cache;
   krb5_creds* cred;
   krb5_principal client_principal;
-  krb5_error_code construct(const char* user, const char* realm);
   krb5_error_code krb5_cleanup(int level);
   void krb5_error(int level, char const* mesg);
   OM_uint32 import_name(const char* server, gss_name_t* desired_name);
   krb5_error_code krb5_finish_get_cred();
 
 public:
+  krb5_context context;
   krb5_error_code err;
-  char* realm;
   char* spnego_token;
-  Krb5(const char* user, const char* realm);
+  Krb5();
+  Krb5(const char* user, const char* realm, const char* cache=NULL);
+  krb5_error_code construct(const char* user, const char* realm, const char* cache_path=NULL);
   virtual ~Krb5();
-  krb5_error_code krb5_get_credentials_by_keytab(const char* keytab);
-  krb5_error_code krb5_get_credentials_by_password(const char* principal);
+  krb5_error_code get_credentials_by_keytab(const char* keytab=NULL);
+  krb5_error_code get_credentials_by_password(const char* principal);
   OM_uint32 generate_spnego_token(const char* server);
 
   #ifdef NODEGYP
@@ -58,14 +58,18 @@ public:
   static v8::Persistent<v8::FunctionTemplate> tpl;
   //library initialization
   static void Initialize(Handle<Object> target);
+
+
   static v8::Handle<v8::Value> getToken(Local<v8::String> property, const v8::AccessorInfo& info);
   static v8::Handle<v8::Value> getErr(Local<v8::String> property, const v8::AccessorInfo& info);
 
   //async bindings
+  static v8::Handle<Value> Construct(const v8::Arguments& args);
   static v8::Handle<Value> ByPassword(const v8::Arguments& args);
   static v8::Handle<Value> ByKeyTab(const v8::Arguments& args);
   static v8::Handle<Value> GenToken(const v8::Arguments& args);
   //sync bindings
+  static v8::Handle<Value> ConstructSync(const v8::Arguments& args);
   static v8::Handle<Value> ByPasswordSync(const v8::Arguments& args);
   static v8::Handle<Value> ByKeyTabSync(const v8::Arguments& args);
   static v8::Handle<Value> GenTokenSync(const v8::Arguments& args);
@@ -74,6 +78,18 @@ public:
   #endif
 };
 #ifdef NODEGYP
+
+template<typename T> class UvBaton{
+public:
+  uv_work_t request;
+  T* wrapper;
+  Persistent<Function> callback;
+  UvBaton(const v8::Arguments& args);
+  ~UvBaton();
+  char ** args;
+  unsigned int length;
+};
+
 v8::Persistent<FunctionTemplate> Krb5::tpl;
 
 //boilerplate code

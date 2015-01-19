@@ -40,42 +40,42 @@
 
   module.exports.Krb5 = function(obj) {
     var k, self;
-    self = this;
     k = new krb5.Krb5;
+    self = this;
     this.kinitSync = function(obj) {
       var realm, user, _ref;
       if (obj != null) {
         if (obj.client_principal != null) {
-          self.client_principal = obj.client_principal;
+          this.client_principal = obj.client_principal;
         }
         if (obj.password != null) {
-          self.password = obj.password;
+          this.password = obj.password;
         }
         if (obj.keytab != null) {
-          self.keytab = obj.keytab;
+          this.keytab = obj.keytab;
         }
         if (obj.cc_file != null) {
-          self.cc_path = obj.cc_file;
-          self.cc_type = "FILE";
+          this.cc_path = obj.cc_file;
+          this.cc_type = "FILE";
         } else if (obj.cc_dir != null) {
-          self.cc_path = obj.cc_dir;
-          self.cc_type = "DIR";
+          this.cc_path = obj.cc_dir;
+          this.cc_type = "DIR";
         }
       }
       if (self.client_principal == null) {
         throw new Error('client_principal not set');
       }
-      _ref = self.client_principal.split('@'), user = _ref[0], realm = _ref[1];
-      if ((self.cc_type != null) && (this.cc_path != null)) {
+      _ref = this.client_principal.split('@'), user = _ref[0], realm = _ref[1];
+      if ((this.cc_type != null) && (this.cc_path != null)) {
         process.env.KRB5CCNAME = "" + this.cc_type + ":" + this.cc_path;
         k.initSync(user, realm, this.cc_path);
       } else {
         k.initSync(user, realm);
       }
       if (self.password != null) {
-        return k.getCredentialsByPasswordSync(self.password);
+        return k.getCredentialsByPasswordSync(this.password);
       } else if (self.keytab != null) {
-        return k.getCredentialsByKeytabSync(self.keytab);
+        return k.getCredentialsByKeytabSync(this.keytab);
       } else {
         return k.getCredentialsByKeytabSync;
       }
@@ -88,26 +88,26 @@
       }
       if (obj != null) {
         if (obj.client_principal != null) {
-          self.client_principal = obj.client_principal;
+          this.client_principal = obj.client_principal;
         }
         if (obj.password != null) {
-          self.password = obj.password;
+          this.password = obj.password;
         }
         if (obj.keytab != null) {
-          self.keytab = obj.keytab;
+          this.keytab = obj.keytab;
         }
         if (obj.cc_file != null) {
-          self.cc_path = obj.cc_file;
-          self.cc_type = "FILE";
+          this.cc_path = obj.cc_file;
+          this.cc_type = "FILE";
         } else if (obj.cc_dir != null) {
-          self.cc_path = obj.cc_dir;
-          self.cc_type = "DIR";
+          this.cc_path = obj.cc_dir;
+          this.cc_type = "DIR";
         }
       }
-      if (self.client_principal == null) {
+      if (this.client_principal == null) {
         return next(new Error('client_principal not set'));
       }
-      _ref = self.client_principal.split('@'), user = _ref[0], realm = _ref[1];
+      _ref = this.client_principal.split('@'), user = _ref[0], realm = _ref[1];
       __next = function(err) {
         if (self.password != null) {
           return k.getCredentialsByPassword(next, self.password);
@@ -118,10 +118,26 @@
         }
       };
       if ((self.cc_type != null) && (self.cc_path != null)) {
-        process.env.KRB5CCNAME = "" + this.cc_type + ":" + this.cc_path;
-        return k.init(__next, user, realm, cc_path);
+        process.env.KRB5CCNAME = "" + self.cc_type + ":" + self.cc_path;
+      }
+      return k.init(__next, user, realm);
+    };
+    this.kdestroySync = function(cache) {
+      if (cache != null) {
+        return k.destroySync(cache);
       } else {
-        return k.init(__next, user, realm);
+        return k.destroySync();
+      }
+    };
+    this.kdestroy = function(cache, next) {
+      if (typeof cache === 'function') {
+        next = cache;
+        cache = null;
+      }
+      if (cache != null) {
+        return k.destroy(next, cache);
+      } else {
+        return k.destroy(next);
       }
     };
     this.tokenSync = function(host) {

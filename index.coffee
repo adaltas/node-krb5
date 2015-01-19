@@ -21,30 +21,30 @@ module.exports = (obj, next) ->
   next(new Error(k.err), k.token)
 
 module.exports.Krb5 = (obj) ->
-  self = this
   k = new krb5.Krb5
+  self = this
   @kinitSync = (obj) ->
     if obj?
-      self.client_principal = obj.client_principal if obj.client_principal?
-      self.password = obj.password if obj.password?
-      self.keytab = obj.keytab if obj.keytab?
+      @client_principal = obj.client_principal if obj.client_principal?
+      @password = obj.password if obj.password?
+      @keytab = obj.keytab if obj.keytab?
       if obj.cc_file?
-        self.cc_path = obj.cc_file
-        self.cc_type = "FILE"
+        @cc_path = obj.cc_file
+        @cc_type = "FILE"
       else if obj.cc_dir?
-        self.cc_path = obj.cc_dir
-        self.cc_type = "DIR"
+        @cc_path = obj.cc_dir
+        @cc_type = "DIR"
     throw new Error 'client_principal not set' unless self.client_principal?
-    [user, realm] = self.client_principal.split '@'
-    if self.cc_type? and @cc_path?
+    [user, realm] = @client_principal.split '@'
+    if @cc_type? and @cc_path?
       process.env.KRB5CCNAME = "#{@cc_type}:#{@cc_path}"
       k.initSync user, realm, @cc_path
     else
       k.initSync user, realm
     if self.password?
-      k.getCredentialsByPasswordSync self.password
+      k.getCredentialsByPasswordSync @password
     else if self.keytab?
-      k.getCredentialsByKeytabSync self.keytab
+      k.getCredentialsByKeytabSync @keytab
     else
       k.getCredentialsByKeytabSync
   
@@ -53,17 +53,17 @@ module.exports.Krb5 = (obj) ->
       next = obj
       obj = null
     if obj?
-      self.client_principal = obj.client_principal if obj.client_principal?
-      self.password = obj.password if obj.password?
-      self.keytab = obj.keytab if obj.keytab?
+      @client_principal = obj.client_principal if obj.client_principal?
+      @password = obj.password if obj.password?
+      @keytab = obj.keytab if obj.keytab?
       if obj.cc_file?
-        self.cc_path = obj.cc_file
-        self.cc_type = "FILE"
+        @cc_path = obj.cc_file
+        @cc_type = "FILE"
       else if obj.cc_dir?
-        self.cc_path = obj.cc_dir
-        self.cc_type = "DIR"
-    return next new Error 'client_principal not set' unless self.client_principal?
-    [user, realm] = self.client_principal.split '@'
+        @cc_path = obj.cc_dir
+        @cc_type = "DIR"
+    return next new Error 'client_principal not set' unless @client_principal?
+    [user, realm] = @client_principal.split '@'
     __next = (err) -> 
       if self.password?
         k.getCredentialsByPassword next, self.password
@@ -72,11 +72,15 @@ module.exports.Krb5 = (obj) ->
       else
         k.getCredentialsByKeytabSync next
     if self.cc_type? and self.cc_path?
-      process.env.KRB5CCNAME = "#{@cc_type}:#{@cc_path}"
-      k.init __next, user, realm, cc_path
-    else
-      k.init __next, user, realm
-    
+      process.env.KRB5CCNAME = "#{self.cc_type}:#{self.cc_path}"
+    k.init __next, user, realm
+  @kdestroySync = (cache) ->
+    return if cache? then k.destroySync cache else k.destroySync()
+  @kdestroy = (cache, next) ->
+    if typeof cache is 'function'
+      next = cache
+      cache = null
+    if cache? then k.destroy next, cache else k.destroy next
   @tokenSync = (host) ->
     if host? then k.generateSpnegoTokenSync host
     else if @service_principal? then k.generateSpnegoTokenSync @service_principal
@@ -101,4 +105,4 @@ module.exports.Krb5 = (obj) ->
       @cc_type = "FILE"
     else if obj.cc_dir?
       @cc_path = obj.cc_dir
-      @cc_type = "DIR"  
+      @cc_type = "DIR"

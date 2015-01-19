@@ -235,12 +235,14 @@ void Krb5::Initialize(v8::Handle<v8::Object> target) {
   NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByKeytab", Krb5::ByKeyTab);
   NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByPassword", Krb5::ByPassword);
   NODE_SET_PROTOTYPE_METHOD(t, "generateSpnegoToken", Krb5::GenToken);
+  NODE_SET_PROTOTYPE_METHOD(t, "destroy", Krb5::Destroy);
 
   //
   NODE_SET_PROTOTYPE_METHOD(t, "initSync", Krb5::InitSync);
   NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByKeytabSync", Krb5::ByKeyTabSync);
   NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByPasswordSync", Krb5::ByPasswordSync);
   NODE_SET_PROTOTYPE_METHOD(t, "generateSpnegoTokenSync", Krb5::GenTokenSync);
+  NODE_SET_PROTOTYPE_METHOD(t, "destroySync", Krb5::DestroySync);
 
 
   Krb5::tpl = v8::Persistent<v8::FunctionTemplate>::New(t);
@@ -325,6 +327,16 @@ void ByKeytabAsync(uv_work_t *request){
   }
 }
 
+void DestroyAsync(uv_work_t *request){
+  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
+  if(baton->length>=1){
+    baton->wrapper->destroy(baton->args[0]);
+  }
+  else{
+    baton->wrapper->destroy();
+  }
+}
+
 v8::Handle<Value> AsyncFunction(const v8::Arguments& args, uv_work_cb asyncFunction, uv_after_work_cb afterFunction){
   UvBaton<Krb5>* baton = new UvBaton<Krb5>(args);
   uv_queue_work(uv_default_loop(), &baton->request, asyncFunction, afterFunction);
@@ -346,6 +358,10 @@ v8::Handle<Value> Krb5::ByPassword(const v8::Arguments& args) {
 
 v8::Handle<Value> Krb5::ByKeyTab(const v8::Arguments& args) {
   return AsyncFunction(args, ByKeytabAsync, SendErrorAfter);
+}
+
+v8::Handle<Value> Krb5::Destroy(const v8::Arguments& args) {
+  return AsyncFunction(args, DestroyAsync, SendErrorAfter);
 }
 
 /** SYNC Mode **/
@@ -404,6 +420,23 @@ v8::Handle<Value> Krb5::GenTokenSync(const v8::Arguments& args) {
     ThrowException(Exception::TypeError(String::New("Wrong number of arguments, please add server_principal")));
     return v8::Integer::New(-1);
   }
+}
+
+v8::Handle<Value> Krb5::DestroySync(const v8::Arguments& args) {
+  // Extract C++ object reference from "this"
+  Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
+  v8::Handle<Value> ret;
+  if(args.Length()==1){
+    v8::String::Utf8Value v8cache_name(args[0]);
+    ret = v8::Integer::New(k->destroy(*v8cache_name));
+  }
+  else{
+    ret = v8::Integer::New(k->destroy());
+  }
+  if(k->err){
+    ThrowException(Exception::TypeError(String::New(k->get_error_message())));
+  }
+  return ret;
 }
 
 #endif

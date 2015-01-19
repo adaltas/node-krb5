@@ -67,11 +67,13 @@ public:
   static v8::Handle<Value> ByPassword(const v8::Arguments& args);
   static v8::Handle<Value> ByKeyTab(const v8::Arguments& args);
   static v8::Handle<Value> GenToken(const v8::Arguments& args);
+  static v8::Handle<Value> Destroy(const v8::Arguments& args);
   //sync bindings
   static v8::Handle<Value> InitSync(const v8::Arguments& args);
   static v8::Handle<Value> ByPasswordSync(const v8::Arguments& args);
   static v8::Handle<Value> ByKeyTabSync(const v8::Arguments& args);
   static v8::Handle<Value> GenTokenSync(const v8::Arguments& args);
+  static v8::Handle<Value> DestroySync(const v8::Arguments& args);
   //Constructor Binding
   static v8::Handle<Value> New(const Arguments& args);
   #endif

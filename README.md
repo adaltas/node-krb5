@@ -1,7 +1,36 @@
-Node.js native binding for kerberos authentification with spnego wrapping
+krb5 is a Node.js native binding for kerberos. It is a node.js implementation of kerberos client tools, such as :
+- kinit (keytab, or password)
+- kdestroy
+It uses the [MIT Kerberos] native library.
+It is also able to generate a SPNEGO token. [SPNEGO] is a GSS mechanism to authenticate through HTML requests.
+Please see the first example in the samples directory for a concrete use case.
+
+# Installation
+
+IF YOU USE MAC OS X, PLEASE MANUALLY COMPILE MIT KERBEROS, AND MODIFY BINDING.GYP AS EXPLAINED BELOW.
+
+If you encounter troubles with your kerberos version, please compile kerberos using [MIT Kerberos sources].
+
+The installation assumes that you have mit-kerberos installed on your computer.
+Your default include directories must contain:
+krb5.h
+gssapi.h
+gssapi/gssapi_krb5.h
+
+Your default library directories must contain:
+krb5 library
+gssapi_krb5 library
+
+If kerberos is not installed in one of theses directories (if you have manually compiled kerberos for example), please modify in binding.gyp :
+
+~~'include_dirs': [],~~
+'include_dirs': ['/path/to/kerberos/include/dir/','/path/to/kerberos_gssapi/include/dir/'],
 
 
-## Usage
+~~'libraries': ['-lkrb5', '-lgssapi_krb5'],~~
+'libraries': ['/path/to/libkrb5', '/path/to/libgssapi_krb5']
+
+# Usage
 
 ## Simple Style
 
@@ -27,27 +56,12 @@ ks = new krb5.Krb5
   renew: true||false
 ks.kinit options, (err) ->
 ks.kdestroy (err) ->
-ks.klist (err, info) ->
-  console.log info.valid_starting
-  console.log info.expires
 ks.token (err, token) ->
   console.log token
 ```
 
-TODO: kdestroy, klist
+for more example, see the samples directory
 
-## Example
-
-```js
-var Krb =require('krb_spnego');
-
-var k = new Krb('username','realm');
-
-k.getCredentialsByKeytabSync('keytabname'); //by keytab
-k.getCredentialsByPasswordSync('password'); //by password
-
-k.generateSpnegoToken('hostname'); //principal will be HTTP@hostname
-k.generateSpnegoToken(); //host = realm
-
-console.log(k.token);
-```
+[MIT Kerberos]: http://web.mit.edu/kerberos/
+[SPNEGO]: http://en.wikipedia.org/wiki/SPNEGO
+[MIT Kerberos sources]: http://web.mit.edu/kerberos/dist/krb5/1.13/krb5-1.13-signed.tar

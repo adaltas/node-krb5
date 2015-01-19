@@ -32,14 +32,12 @@ class Krb5 {
 #endif
 private:
   bool renew;
-  krb5_keytab keytab;
   krb5_ccache cache;
   krb5_creds* cred;
   krb5_principal client_principal;
-  krb5_error_code krb5_cleanup(int level);
+  krb5_error_code cleanup(int level);
   void krb5_error(int level, char const* mesg);
   OM_uint32 import_name(const char* server, gss_name_t* desired_name);
-  krb5_error_code krb5_finish_get_cred();
 
 public:
   krb5_context context;
@@ -47,6 +45,7 @@ public:
   char* spnego_token;
   Krb5();
   krb5_error_code init(const char* user, const char* realm);
+  krb5_error_code destroy(const char* name=NULL);
   virtual ~Krb5();
   krb5_error_code get_credentials_by_keytab(const char* keytab=NULL);
   krb5_error_code get_credentials_by_password(const char* principal);

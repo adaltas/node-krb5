@@ -25,17 +25,14 @@
     _ref = obj.client_principal.split('@'), user = _ref[0], realm = _ref[1];
     if (obj.cc_file != null) {
       process.env.KRB5CCNAME = "FILE:" + obj.cc_file;
-      k.initSync(user, realm, obj.cc_file);
     } else if (obj.cc_dir != null) {
       process.env.KRB5CCNAME = "DIR:" + obj.cc_dir;
-      k.initSync(user, realm, obj.cc_dir);
-    } else {
-      k.initSync(user, realm);
     }
-    if (obj.user_password) {
-      k.getCredentialsByPasswordSync(obj.user_password);
+    k.initSync(user, realm);
+    if (obj.password != null) {
+      k.getCredentialsByPasswordSync(obj.password);
     } else {
-      k.getCredentialsByKeytabSync(obj.user_keytab);
+      k.getCredentialsByKeytabSync(obj.keytab);
     }
     toto = k.generateSpnegoTokenSync(obj.service_principal);
     return next(new Error(k.err), k.token);

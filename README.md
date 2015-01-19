@@ -9,11 +9,10 @@ Node.js native binding for kerberos authentification with spnego wrapping
 krb5 = require 'krb5'
 
 krb5
-  user_principal
-  user_password
-  user_keytab  # ignored if password is set. If not and user_keytab not set, default keytab is used
+  client_principal
+  password
+  keytab  # ignored if password is set. If not and user_keytab not set, default keytab is used
   service_principal
-  renew: true||false
 , (err, spnego_token) ->
   console.log spnego_token
 ```
@@ -21,19 +20,21 @@ krb5
 
 ```coffeescript
 ks = new krb5.Krb5
-  user_principal
-  user_password
-  user_keytab  # ignored if password is set. If not and user_keytab not set, default keytab is used
+  client_principal
+  password
+  keytab  # ignored if password is set. If not and user_keytab not set, default keytab is used
   service_principal
   renew: true||false
-ks.kinit options, (err, info) ->
-ks.kdestroy (err, info) ->
+ks.kinit options, (err) ->
+ks.kdestroy (err) ->
 ks.klist (err, info) ->
   console.log info.valid_starting
   console.log info.expires
-ks.spnego (err, token) ->
+ks.token (err, token) ->
   console.log token
 ```
+
+TODO: kdestroy, klist
 
 ## Example
 
@@ -50,4 +51,3 @@ k.generateSpnegoToken(); //host = realm
 
 console.log(k.token);
 ```
-

@@ -10,16 +10,13 @@ module.exports = (obj, next) ->
   [user, realm] = obj.client_principal.split '@'
   if obj.cc_file?
     process.env.KRB5CCNAME = "FILE:#{obj.cc_file}"
-    k.initSync user, realm, obj.cc_file
   else if obj.cc_dir?
     process.env.KRB5CCNAME = "DIR:#{obj.cc_dir}"
-    k.initSync user, realm, obj.cc_dir
+  k.initSync user, realm
+  if obj.password?
+    k.getCredentialsByPasswordSync obj.password
   else
-    k.initSync user, realm
-  if obj.user_password
-    k.getCredentialsByPasswordSync obj.user_password
-  else
-    k.getCredentialsByKeytabSync obj.user_keytab
+    k.getCredentialsByKeytabSync obj.keytab
   toto = k.generateSpnegoTokenSync obj.service_principal
   next(new Error(k.err), k.token)
 

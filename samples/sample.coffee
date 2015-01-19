@@ -5,7 +5,7 @@ krb = require '../index.js'
 
 # Configuration
 user = 'pierre@HADOOP.ADALTAS.COM'
-passwd = ''
+passwd = 'pierre123'
 host = 'hadoop.adaltas.com' 
 
 www_opt =
@@ -21,10 +21,11 @@ http.get www_opt, (res) ->
   console.log "1. RESPONSE : #{res.statusCode}"
   if res.statusCode is 401
     krb
-      user_principal: user
-      user_password: passwd
+      client_principal: user
+      password: passwd
       service_principal: "HTTP@#{host}"
     , (err, spnego_token) ->
+      console.log spnego_token
       www_opt.headers =
         'Authorization': "Negotiate #{spnego_token}"
       http.get www_opt,(res) ->

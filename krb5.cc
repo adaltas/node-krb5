@@ -22,34 +22,47 @@ krb5_error_code Krb5::init(const char* user, const char* realm){
   }
   this->err = krb5_build_principal(this->context, &this->client_principal, len_realm, realm, user, NULL);
   if(this->err) {
-    return this->krb5_cleanup(2);
+    return this->cleanup(2);
   }
   this->err = krb5_cc_default(this->context, &this->cache);
   if(this->err) {
-    return this->krb5_cleanup(3);
+    return this->cleanup(3);
   }
   if(!exists(krb5_cc_get_name(this->context, this->cache))){
     this->err = krb5_cc_initialize(this->context, this->cache, this->client_principal);
     if(this->err) {
-      return this->krb5_cleanup(4);
+      return this->cleanup(4);
     }
   }
   return this->err;
 }
 
+krb5_error_code Krb5::destroy(const char* name){
+  krb5_ccache cache;
+  if(name){
+    this->err = krb5_cc_resolve(this->context, name, &cache);
+    if(this->err) return this->err;
+  }
+  else{
+    this->err = krb5_cc_default(this->context, &cache);
+    if(this->err) return this->err;
+  }
+  this->err = krb5_cc_destroy(this->context, cache);
+  return this->err;
+}
+
 Krb5::Krb5(){
-  this->keytab=NULL;
   this->spnego_token=NULL;
   this->err=0;
   this->err = krb5_init_secure_context(&this->context);
   this->cred = (krb5_creds*)malloc(sizeof(krb5_creds));
   memset(this->cred, 0, sizeof(krb5_creds));
   if(this->err) {
-    this->krb5_cleanup(1);
+    this->cleanup(1);
   }
 }
 
-krb5_error_code Krb5::krb5_cleanup(int level) {
+krb5_error_code Krb5::cleanup(int level) {
   switch(level) {
   default:
   case 0:
@@ -66,7 +79,7 @@ krb5_error_code Krb5::krb5_cleanup(int level) {
 }
 
 Krb5::~Krb5() {
-  this->krb5_cleanup(NO_ERROR);
+  this->cleanup(NO_ERROR);
 }
 
 const char* Krb5::get_error_message(){
@@ -75,13 +88,14 @@ const char* Krb5::get_error_message(){
 
 krb5_error_code Krb5::get_credentials_by_keytab(const char* keytabName) {
   char kt[2048];
+  krb5_keytab keytab;
   if(!this->err){
     if(keytabName){
       int len = strlen(keytabName);
       if(len) {
         strcpy(kt,"FILE:");
         strcat(kt,realpath(keytabName,NULL));
-        this->err = krb5_kt_resolve(this->context, kt, &this->keytab);
+        this->err = krb5_kt_resolve(this->context, kt, &keytab);
       }
       else {
         this->err = krb5_kt_default(this->context,&keytab);
@@ -92,13 +106,23 @@ krb5_error_code Krb5::get_credentials_by_keytab(const char* keytabName) {
       this->err = krb5_kt_default(this->context,&keytab);
     }
     if(this->err) {
-      return this->krb5_cleanup(5);
+      return this->cleanup(5);
     }
     this->err = krb5_get_init_creds_keytab(context, cred, client_principal, keytab, 0, NULL, NULL);
     if(this->err) {
-      return this->krb5_cleanup(6);
+      return this->cleanup(6);
     }
-    this->krb5_finish_get_cred();
+    this->err = krb5_verify_init_creds(this->context,this->cred,NULL, NULL, NULL, NULL);
+    if(this->err) {
+      this->cleanup(6);
+      return this->err;
+    }
+    this->err = krb5_cc_store_cred(this->context, this->cache, this->cred);
+
+    if(this->err) {
+      this->cleanup(6);
+      return this->err;
+    }
   }
   return this->err;
 }
@@ -108,29 +132,14 @@ krb5_error_code Krb5::get_credentials_by_password(const char* password) {
   if(!this->err){
     this->err = krb5_get_init_creds_password(this->context,this->cred,this->client_principal,password, NULL, NULL, 0, NULL, NULL);
     if(this->err) {
-      this->krb5_cleanup(6);
+      this->cleanup(6);
       return this->err;
     }
-    this->krb5_finish_get_cred();
-  }
-  return this->err;
-}
-/*
-ROUTINE:
-Sauvegarde du token + Initialisation GSS-API + release du token kerberos (inutile, puisqu'importé par GSS-API)
-*/
-krb5_error_code Krb5::krb5_finish_get_cred() {
-  this->err = krb5_verify_init_creds(this->context,this->cred,NULL, NULL, NULL, NULL);
-  if(this->err) {
-    krb5_free_creds(this->context,this->cred);
-    this->krb5_cleanup(6);
-    return this->err;
-  }
-  this->err = krb5_cc_store_cred(this->context, this->cache, this->cred);
-  if(this->err) {
-    krb5_free_creds(this->context,this->cred);
-    this->krb5_cleanup(6);
-    return this->err;
+    this->err = krb5_cc_store_cred(this->context, this->cache, this->cred);
+    if(this->err) {
+      this->cleanup(6);
+      return this->err;
+    }
   }
   return this->err;
 }
@@ -157,7 +166,7 @@ OM_uint32 Krb5::generate_spnego_token(const char* server) {
 
   err = import_name(server,&target_name);
   if(err) {
-    return this->krb5_cleanup(8);
+    return this->cleanup(8);
   }
 
   err = gss_init_sec_context((OM_uint32*)&this->err,

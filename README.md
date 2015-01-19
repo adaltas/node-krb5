@@ -14,21 +14,20 @@ If you encounter troubles with your kerberos version, please compile kerberos us
 The installation assumes that you have mit-kerberos installed on your computer.
 Your default include directories must contain:
 krb5.h
-gssapi.h
-gssapi/gssapi_krb5.h
+- *gssapi.h*
+- *gssapi/gssapi_krb5.h*
 
 Your default library directories must contain:
-krb5 library
-gssapi_krb5 library
+- *krb5* library
+- *gssapi_krb5* library
 
 If kerberos is not installed in one of theses directories (if you have manually compiled kerberos for example), please modify in binding.gyp :
 
-~~'include_dirs': [],~~
+```js
 'include_dirs': ['/path/to/kerberos/include/dir/','/path/to/kerberos_gssapi/include/dir/'],
 
-
-~~'libraries': ['-lkrb5', '-lgssapi_krb5'],~~
 'libraries': ['/path/to/libkrb5', '/path/to/libgssapi_krb5']
+```
 
 # Usage
 

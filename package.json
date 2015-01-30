@@ -14,7 +14,8 @@
     "coffee-script": "latest"
   },
   "scripts": {
-    "install": "(coffee -c index.coffee && node-gyp rebuild 2> builderror.log) || (exit 0)"
+    "preinstall": "coffee -c index.coffee",
+    "install": "node-gyp rebuild"
   },
   "author": {
     "name": "Pierre Sauvage"

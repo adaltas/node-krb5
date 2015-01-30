@@ -7,18 +7,27 @@ Please see the first example in the samples directory for a concrete use case.
 
 # Installation
 
-The installation assumes that you have mit-kerberos installed on your computer.
+The installation assumes that you have mit-kerberos installed on your computer. If you are on Linux, just do
+```bash
+npm install
+```
+If you are on Windows or Mac OS, please read the corresponding section
 
-IF YOU USE MAC OS X, PLEASE MANUALLY COMPILE MIT KERBEROS, AND MODIFY BINDING.GYP AS EXPLAINED BELOW.
+## Windows
+
+To compile this library in windows, you need a complete visual studio compile chain, please refer to this [webpage][visual studio].
+If you have a 32 bit OS, please delete binding.gyp and rename _binding32.gyp before install.
+
+## Mac OS X
 
 If you encounter troubles with your kerberos version, please compile kerberos using the following instructions.
 
-Your default include directories must contain:
+Your include path must contain:
 krb5.h
 *   *gssapi.h*
 *   *gssapi/gssapi_krb5.h*
 
-Your default library directories must contain:
+Your library path must contain:
 *   *krb5* library
 *   *gssapi_krb5* library
 
@@ -37,8 +46,8 @@ make
 sudo make install
 ```
 
-If kerberos is not installed in one of theses directories (if you have manually
-compiled kerberos in a specific directory for example), please merge the
+If kerberos is not installed in a directory not included in include and/or library path (if you have manually
+compiled kerberos in a specific directory for example), please modify the
 binding.gyp present in the package root folder with the following properties:
 
 ```js
@@ -85,6 +94,4 @@ for more example, see the samples directory
 [MIT Kerberos]: http://web.mit.edu/kerberos/
 [SPNEGO]: http://en.wikipedia.org/wiki/SPNEGO
 [MIT Kerberos Dist]: http://web.mit.edu/kerberos/dist/
-
-
-
+[visual studio]:https://github.com/TooTallNate/node-gyp/wiki/Visual-Studio-2010-Setup

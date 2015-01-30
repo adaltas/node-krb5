@@ -25,10 +25,10 @@
                 "AdditionalOptions": [ "/MP /EHsc" ]
               },
               'VCLinkerTool': {
-                'AdditionalLibraryDirectories': ['/Program Files/Microsoft SDKs/Windows/v7.1/Lib/x64', '<(KRB_PATH)/lib/amd64/']
+                'AdditionalLibraryDirectories': ['/Program Files/Microsoft SDKs/Windows/v7.1/Lib', '<(KRB_PATH)/lib/i386/']
               }
             },
-            "libraries": ["-lkrb5_64.lib","-lgssapi64.lib"],
+            "libraries": ["-lkrb5_32.lib","-lgssapi32.lib"],
           }
         ],
         [

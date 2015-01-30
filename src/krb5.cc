@@ -1,5 +1,4 @@
 #include "krb5.h"
-#include <sys/stat.h>
 
 static gss_OID_desc _gss_mech_spnego = {6, (void*)"\x2b\x06\x01\x05\x05\x02"}; //Spnego OID: 1.3.6.1.5.5.2
 static const gss_OID GSS_MECH_SPNEGO= &_gss_mech_spnego; //gss_OID == gss_OID_desc*
@@ -79,7 +78,7 @@ krb5_error_code Krb5::cleanup(int level) {
 }
 
 Krb5::~Krb5() {
-  this->cleanup(NO_ERROR);
+  this->cleanup(0);
 }
 
 const char* Krb5::get_error_message(){
@@ -94,7 +93,7 @@ krb5_error_code Krb5::get_credentials_by_keytab(const char* keytabName) {
       int len = strlen(keytabName);
       if(len) {
         strcpy(kt,"FILE:");
-        strcat(kt,realpath(keytabName,NULL));
+        strcat(kt,keytabName);
         this->err = krb5_kt_resolve(this->context, kt, &keytab);
       }
       else {
@@ -128,7 +127,7 @@ krb5_error_code Krb5::get_credentials_by_keytab(const char* keytabName) {
 }
 
 
-krb5_error_code Krb5::get_credentials_by_password(const char* password) {
+krb5_error_code Krb5::get_credentials_by_password(char* password) {
   if(!this->err){
     this->err = krb5_get_init_creds_password(this->context,this->cred,this->client_principal,password, NULL, NULL, 0, NULL, NULL);
     if(this->err) {

@@ -20,9 +20,6 @@
 //local libs
 #include "base64.h"
 
-
-#define NO_ERROR 0
-
 #ifdef NODEGYP
 using namespace v8;
 
@@ -48,7 +45,7 @@ public:
   krb5_error_code destroy(const char* name=NULL);
   virtual ~Krb5();
   krb5_error_code get_credentials_by_keytab(const char* keytab=NULL);
-  krb5_error_code get_credentials_by_password(const char* principal);
+  krb5_error_code get_credentials_by_password(char* password);
   OM_uint32 generate_spnego_token(const char* server);
   const char* get_error_message();
 

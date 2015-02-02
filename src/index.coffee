@@ -1,4 +1,4 @@
-krb5 = require './build/Release/krb5'
+krb5 = require '../build/Release/krb5'
 
 module.exports = (obj, next) ->
   return next new Error 'Params: Not an object' unless typeof obj is 'object'

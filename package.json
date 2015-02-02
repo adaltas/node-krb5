@@ -1,6 +1,6 @@
 {
   "name": "krb5",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Kerberos library for Node.js, with Spnego Wrapping",
   "main": "index.js",
   "keywords": [

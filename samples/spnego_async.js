@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 
-require('coffee-script/register');
-var krb5 = require('../src');
 var url = require('url');
 var util = require('util');
-// var krb5 = require('../lib');
+var krb5 = require('../lib');
 var yargs = require('yargs');
 
 /*

@@ -4,7 +4,7 @@ krb5 = require '../build/Release/krb5'
 
 module.exports = (options, callback) ->
   k = new Krb5 options
-  # k.kinit callback if callback
+  k.kinit callback if callback
   k
 
 module.exports.spnego = (options, callback) ->

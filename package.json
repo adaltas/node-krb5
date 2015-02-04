@@ -11,7 +11,8 @@
     "authentication"
   ],
   "devDependencies": {
-    "coffee-script": "latest"
+    "coffee-script": "latest",
+    "yargs": "latest"
   },
   "scripts": {
     "preinstall": "./node_modules/.bin/coffee -b -o lib src",

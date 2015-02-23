@@ -102,6 +102,12 @@ Krb5::token = (service_principal_or_fqdn, next) ->
   if arguments.length is 1
     next = service_principal_or_fqdn
     service_principal_or_fqdn = null
+  ts = Date.now()
+  if @last_token_ts is ts
+    return setTimeout =>
+      @token service_principal_or_fqdn, next
+    , 1
+  @last_token_ts = ts
   service_principal_or_fqdn ?= @options.service_principal
   service_principal_or_fqdn ?= @options.service_fqdn
   return next Error 'Missing property "service_principal" or "service_fqdn"' unless service_principal_or_fqdn

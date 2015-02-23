@@ -15,6 +15,7 @@
     "yargs": "latest"
   },
   "scripts": {
+    "coffee": "./node_modules/.bin/coffee -b -o lib src",
     "preinstall": "./node_modules/.bin/coffee -b -o lib src",
     "install": "node-gyp rebuild"
   },

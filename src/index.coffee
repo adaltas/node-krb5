@@ -17,9 +17,9 @@ module.exports.spnego = (options, callback) ->
   k = new Krb5 options
   k.kinit (err) ->
     return callback err if err
-    k.token options.service_principal, (err, res) ->
+    k.token options.service_principal, (err, token) ->
       err = Error k.err if k.err
-      callback err, res
+      callback err, token
   k
 
 ###

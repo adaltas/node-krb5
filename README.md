@@ -62,36 +62,39 @@ binding.gyp present in the package root folder with the following properties:
 
 # Usage
 
-## Simple Style
+## API
 
 ```coffeescript
-krb5 = require 'krb5'
-
-krb5
-  client_principal
-  password
-  keytab  # ignored if password is set. If not and user_keytab not set, default keytab is used
-  service_principal
-, (err, spnego_token) ->
-  console.log spnego_token
-```
-## Advanced Style
-
-```coffeescript
-ks = new krb5.Krb5
-  client_principal
-  password
-  keytab  # ignored if password is set. If not and user_keytab not set, default keytab is used
-  service_principal
-  renew: true||false
-ks.kinit options, (err) ->
-ks.kdestroy (err) ->
-ks.token (err, token) ->
+k = krb5
+  principal
+  password: 'mypass' # If keytab not set
+  keytab: '/etc/security/keytabs/me.keytab' # If password not set, default keytab if not defined
+  service_principal: 'HTTP@domain.com'
+  renew: true
+k.kinit options, (err) ->
+k.kdestroy (err) ->
+k.token (err, token) ->
   console.log token
 ```
 
-for more example, see the samples directory
+## Spnego
+
+```coffeescript
+krb5 = require 'krb5'
+krb5.spnego
+  principal: 'me@MY.REALM'
+  password: 'mypass' # If keytab not set
+  keytab: '/etc/security/keytabs/me.keytab'  # If password not set, default keytab if not defined
+  service_principal: 'HTTP@domain.com'
+, (err, token) ->
+  console.log token
+```
+
+for more example, see the [samples directory][samples].
+
 [MIT Kerberos]: http://web.mit.edu/kerberos/
 [SPNEGO]: http://en.wikipedia.org/wiki/SPNEGO
 [MIT Kerberos Dist]: http://web.mit.edu/kerberos/dist/
 [visual studio]:https://github.com/TooTallNate/node-gyp/wiki/Visual-Studio-2010-Setup
+[samples]: https://github.com/adaltas/node-krb5/tree/master/samples
+

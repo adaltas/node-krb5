@@ -1,26 +1,35 @@
-krb5 is a Node.js native binding for kerberos. It is a node.js implementation of kerberos client tools, such as :
+
+# Kerberos for Node.js
+
+krb5 is a Node.js native binding for kerberos. It is a node.js implementation of
+kerberos client tools, such as :
 - kinit (keytab, or password)
 - kdestroy
 It uses the [MIT Kerberos] native library.
-It is also able to generate a SPNEGO token. [SPNEGO] is a GSS mechanism to authenticate through HTML requests.
+It is also able to generate a SPNEGO token. [SPNEGO] is a GSS mechanism to
+authenticate through HTML requests.
 Please see the first example in the samples directory for a concrete use case.
 
-# Installation
+## Installation
 
-The installation assumes that you have mit-kerberos installed on your computer. If you are on Linux, just do
+The installation assumes that you have mit-kerberos installed on your computer. 
+On Linux, you shall be all set. On Windows or Mac OS, please read the
+corresponding section below. Once mit-kerberos is installed, run
+
 ```bash
 npm install
 ```
-If you are on Windows or Mac OS, please read the corresponding section
 
 ## Windows
 
-To compile this library in windows, you need a complete visual studio compile chain, please refer to this [webpage][visual studio].
-If you have a 32 bit OS, please delete binding.gyp and rename _binding32.gyp before install.
+To compile this library in windows, you need a complete visual studio compile
+chain, please refer to this [webpage][visual studio]. If you have a 32 bit OS,
+please delete binding.gyp and rename _binding32.gyp before install.
 
 ## Mac OS X
 
-If you encounter troubles with your kerberos version, please compile kerberos using the following instructions.
+If you encounter troubles with your kerberos version, please compile kerberos
+using the following instructions.
 
 Your include path must contain:
 krb5.h

@@ -187,7 +187,7 @@ OM_uint32 Krb5::generate_spnego_token(const char* server) {
     free(this->spnego_token);
   }
   this->spnego_token = (char*) malloc(strlen(token_buffer)+1);
-  strcpy(this->spnego_token,token_buffer);
+  strcpy(this->spnego_token, token_buffer);
   gss_release_name((OM_uint32*)&this->err, &target_name);
   return 0;
 }
@@ -203,7 +203,7 @@ UvBaton<T>::UvBaton(const v8::Arguments& args){
   this->args = (char**)malloc(this->length*sizeof(char*));
   for(unsigned int i=0; i< this->length; i++){
     v8::String::Utf8Value params(args[i+1]->ToString());
-    this->args[i] = (char*)malloc(strlen(*params));
+    this->args[i] = (char*)malloc(strlen(*params)+1);
     strcpy(this->args[i],*params);
   }
 }

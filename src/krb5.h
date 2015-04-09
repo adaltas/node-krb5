@@ -55,7 +55,6 @@ public:
   //library initialization
   static void Initialize(Handle<Object> target);
 
-
   static v8::Handle<v8::Value> getToken(Local<v8::String> property, const v8::AccessorInfo& info);
   static v8::Handle<v8::Value> getErr(Local<v8::String> property, const v8::AccessorInfo& info);
 

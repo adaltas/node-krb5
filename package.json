@@ -3,6 +3,7 @@
   "version": "0.0.2",
   "description": "Kerberos library for Node.js, with Spnego Wrapping",
   "main": "./lib/index.js",
+  "license": "BSD-3-Clause",
   "keywords": [
     "kerberos",
     "security",

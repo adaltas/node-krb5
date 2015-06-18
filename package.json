@@ -11,6 +11,9 @@
     "spnego",
     "authentication"
   ],
+  "dependencies": {
+    "bindings": "latest"
+  },
   "devDependencies": {
     "coffee-script": "latest",
     "yargs": "latest"

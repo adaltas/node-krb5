@@ -1,30 +1,38 @@
 #include "worker.h"
 #include "bind.h"
 
-Worker::Worker(Krb5* k, Nan::Callback* cb, v8::Local<v8::Value>* args, int length, void (*func)(Krb5* k, const v8::Local<v8::Value>* args, int length), bool ret) : Nan::AsyncWorker(cb) {
-  this->length = length;
+Worker::Worker(Krb5* k, Nan::Callback* cb, char** args, int args_length, void (*func)(Krb5*, const char* const*, int), bool ret) : Nan::AsyncWorker(cb) {
   this->k = k;
-  this->ret = ret;
-  this->func = func;
+  this->args_length = args_length;
   this->args = args;
+  this->func = func;
+  this->ret = ret;
 }
 
-Worker* Worker::Create(const Nan::FunctionCallbackInfo<v8::Value>& info, void (*func)(Krb5* k, const v8::Local<v8::Value>* args, int length), bool ret) {
+Worker* Worker::Create(const Nan::FunctionCallbackInfo<v8::Value>& info, void (*func)(Krb5*, const char* const*, int), bool ret) {
   int length = info.Length()-1;
-  Nan::Callback* callback = new Nan::Callback(info[length].As<v8::Function>());
   Krb5* k = ((Krb5Wrap*)Nan::ObjectWrap::Unwrap<Krb5Wrap>(info.This()))->Unwrap();
-  v8::Local<v8::Value>* args = new v8::Local<v8::Value>[length];
+  Nan::Callback* callback = new Nan::Callback(info[length].As<v8::Function>());
+  char** args = (length>0)?new char*[length]:NULL;
   int i;
   for(i=0; i<length; i++){
-    args[i] = info[i];
+    v8::String::Utf8Value arg(info[i]);
+    args[i] = new char[strlen(*arg)];
+    strcpy(args[i], *arg);
   }
   return new Worker(k, callback, args, length, func, ret);
 }
 
-Worker::~Worker() {}
+Worker::~Worker() {
+  int i;
+  for(i=0; i<this->args_length; i++){
+    free(this->args[i]);
+  }
+  if(this->args) free(this->args);
+}
 
 void Worker::Execute() {
-  (*func)(this->k, this->args, this->length);
+  (*func)(this->k, this->args, this->args_length);
 }
 
 void Worker::HandleOKCallback() {

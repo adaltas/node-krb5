@@ -94,7 +94,7 @@ Krb5::tokenSync = (service_principal_or_fqdn) ->
   service_principal_or_fqdn ?= @options.service_principal
   service_principal_or_fqdn ?= @options.service_fqdn
   throw Error 'Missing property "service_principal" or "service_fqdn"' unless service_principal_or_fqdn
-  service_principal_or_fqdn = "HTTP/#{service_principal_or_fqdn}" unless /HTTP[@\/]/.test service_principal_or_fqdn
+  service_principal_or_fqdn = "HTTP@#{service_principal_or_fqdn}" unless /HTTP[@\/]/.test service_principal_or_fqdn
   @k.generateSpnegoTokenSync service_principal_or_fqdn
 Krb5::token = (service_principal_or_fqdn, callback) ->
   if arguments.length is 1

@@ -141,7 +141,7 @@ krb5_error_code Krb5::get_credentials_by_keytab(const char* keytabName) {
   return this->err;
 }
 
-krb5_error_code Krb5::get_credentials_by_password(char* password) {
+krb5_error_code Krb5::get_credentials_by_password(const char* password) {
   if(!this->err){
     this->err = krb5_get_init_creds_password(this->context,this->cred,this->client_principal,password, NULL, NULL, 0, NULL, NULL);
     if(this->err) {
@@ -169,38 +169,59 @@ OM_uint32 Krb5::import_name(const char* principal, gss_name_t* desired_name) {
 Get the Base64-encoded token
 */
 OM_uint32 Krb5::generate_spnego_token(const char* server) {
-  char token_buffer[2048];
   gss_ctx_id_t gss_context = GSS_C_NO_CONTEXT;
   gss_buffer_desc input_buf,output_buf;
-
   gss_name_t target_name;
-  OM_uint32 err;
-
-  err = import_name(server,&target_name);
-  if(err) {
-    return this->cleanup();
-  }
-
-  err = gss_init_sec_context((OM_uint32*)&this->err,
-                             GSS_C_NO_CREDENTIAL,
-                             &gss_context,
-                             target_name,
-                             GSS_MECH_SPNEGO,
-                             GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG,
-                             GSS_C_INDEFINITE,
-                             GSS_C_NO_CHANNEL_BINDINGS,
-                             &input_buf,
-                             NULL,
-                             &output_buf,
-                             NULL,
-                             NULL);
-
-  encode64((char*)output_buf.value,token_buffer,output_buf.length);
+  OM_uint32 gss_err;
   if(this->spnego_token){
     free(this->spnego_token);
   }
-  this->spnego_token = (char*) malloc(strlen(token_buffer)+1);
-  strcpy(this->spnego_token, token_buffer);
-  gss_release_name((OM_uint32*)&this->err, &target_name);
-  return 0;
+  gss_err = import_name(server,&target_name);
+  if(gss_err) {
+    return this->cleanup();
+  }
+  gss_err = gss_init_sec_context((OM_uint32*)&this->err,
+                  GSS_C_NO_CREDENTIAL,
+                  &gss_context,
+                  target_name,
+                  GSS_MECH_SPNEGO,
+                  GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG,
+                  GSS_C_INDEFINITE,
+                  GSS_C_NO_CHANNEL_BINDINGS,
+                  &input_buf,
+                  NULL,
+                  &output_buf,
+                  NULL,
+                  NULL);
+  if(!(GSS_ERROR(gss_err) || this->err)){
+    char token_buffer[2048];
+    encode64((char*)output_buf.value,token_buffer,output_buf.length);
+    this->spnego_token = new char[strlen(token_buffer)+1];
+    strcpy(this->spnego_token, token_buffer);
+  }
+  else{
+    if(GSS_ERROR(gss_err) && !this->err){
+      char token_buffer[2048];
+      OM_uint32 message_context;
+      OM_uint32 min_status;
+      gss_buffer_desc status_string;
+      message_context = 0;
+      token_buffer[0] = '\0';
+      do {
+        gss_display_status(
+              &min_status,
+              gss_err,
+              GSS_C_GSS_CODE,
+              GSS_C_NO_OID,
+              &message_context,
+              &status_string);
+        strcat(token_buffer, (char *)status_string.value);
+        gss_release_buffer(&min_status, &status_string);
+      } while (message_context != 0);
+      this->init_custom_error(gss_err,token_buffer);
+      this->set_error(gss_err);
+    }
+    this->spnego_token = NULL;
+  }
+  return gss_err;
 }

@@ -18,7 +18,7 @@ public:
   krb5_error_code init(const char* user, const char* realm);
   krb5_error_code destroy(const char* name=NULL);
   krb5_error_code get_credentials_by_keytab(const char* keytab=NULL);
-  krb5_error_code get_credentials_by_password(char* password);
+  krb5_error_code get_credentials_by_password(const char* password);
   OM_uint32 generate_spnego_token(const char* server);
   const char* get_error_message();
   void init_custom_error(krb5_error_code errCode, const char* msg="Unknown Error");

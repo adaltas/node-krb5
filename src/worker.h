@@ -6,18 +6,17 @@
 
 class Worker : public Nan::AsyncWorker {
 public:
-  static Worker* Create(const Nan::FunctionCallbackInfo<v8::Value>& info, void (*asyncFunc)(Krb5*, const v8::Local<v8::Value>*, int), bool ret=false);
+  static Worker* Create(const Nan::FunctionCallbackInfo<v8::Value>&, void (*)(Krb5*, const char* const*, int), bool ret=false);
   ~Worker();
 private:
   Krb5* k;
-  int length;
+  int args_length;
   bool ret;
-  v8::Local<v8::Value>* args;
-
-  Worker(Krb5*, Nan::Callback*, v8::Local<v8::Value>*, int, void (*)(Krb5*, const v8::Local<v8::Value>*, int), bool);
+  char** args;
+  Worker(Krb5*, Nan::Callback*, char**, int, void (*)(Krb5*, const char* const*, int), bool);
   virtual void Execute();
   virtual void HandleOKCallback();
-  void (*func)(Krb5*, const v8::Local<v8::Value>*, int);
+  void (*func)(Krb5*, const char* const*, int);
 };
 
 #endif

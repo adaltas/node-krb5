@@ -72,51 +72,45 @@ void Krb5Wrap::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
 
 /** Async WRAP **/
 
-void GenTokenAsync(Krb5* k, const v8::Local<v8::Value>* args, int length){
+void GenTokenAsync(Krb5* k, const char* const* args, int length){
   if(length>=1){
-    v8::String::Utf8Value v8server_name(args[0]);
-    k->generate_spnego_token(*v8server_name);
+    k->generate_spnego_token(args[0]);
   }
   else{
     k->set_error(INVALID_PARAMETER);
   }
 }
 
-void InitAsync(Krb5* k, const v8::Local<v8::Value>* args, int length){
+void InitAsync(Krb5* k, const char* const* args, int length){
   if(length>=2){
-    v8::String::Utf8Value user(args[0]);
-    v8::String::Utf8Value realm(args[1]);
-    k->init(*user,*realm);
+    k->init(args[0],args[1]);
   }
   else{
     k->set_error(INVALID_PARAMETER);
   }
 }
 
-void ByPasswordAsync(Krb5* k, const v8::Local<v8::Value>* args, int length){
+void ByPasswordAsync(Krb5* k, const char* const* args, int length){
   if(length>=1){
-    v8::String::Utf8Value password(args[0]);
-    k->get_credentials_by_password(*password);
+    k->get_credentials_by_password(args[0]);
   }
   else{
     k->set_error(INVALID_PARAMETER);
   }
 }
 
-void ByKeytabAsync(Krb5* k, const v8::Local<v8::Value>* args, int length){
+void ByKeytabAsync(Krb5* k, const char* const* args, int length){
   if(length>=1){
-    v8::String::Utf8Value kt(args[0]);
-    k->get_credentials_by_keytab(*kt);
+    k->get_credentials_by_keytab(args[0]);
   }
   else{
     k->set_error(INVALID_PARAMETER);
   }
 }
 
-void DestroyAsync(Krb5* k, const v8::Local<v8::Value>* args, int length){
+void DestroyAsync(Krb5* k, const char* const* args, int length){
   if(length>=1){
-    v8::String::Utf8Value name(args[0]);
-    k->destroy(*name);
+    k->destroy(args[0]);
   }
   else{
     k->destroy();
@@ -148,9 +142,9 @@ void Krb5Wrap::Destroy(const Nan::FunctionCallbackInfo<v8::Value>& info) {
 void Krb5Wrap::InitSync(const Nan::FunctionCallbackInfo<v8::Value>& info) {
   Krb5* k = ((Krb5Wrap*)Nan::ObjectWrap::Unwrap<Krb5Wrap>(info.This()))->Unwrap();
   if(info.Length()>=1){
-  v8::String::Utf8Value v8user(info[0]);
-  v8::String::Utf8Value v8realm(info[1]);
-  info.GetReturnValue().Set(Nan::New(k->init(*v8user,*v8realm)));
+    v8::String::Utf8Value v8user(info[0]);
+    v8::String::Utf8Value v8realm(info[1]);
+    info.GetReturnValue().Set(Nan::New(k->init(*v8user,*v8realm)));
   }
 }
 
@@ -193,6 +187,9 @@ void Krb5Wrap::GenTokenSync(const Nan::FunctionCallbackInfo<v8::Value>& info) {
     k->generate_spnego_token(*v8server_name);
     if(k->err){
       Nan::ThrowError(k->get_error_message());
+    }
+    else{
+      info.GetReturnValue().Set(Nan::New(k->spnego_token).ToLocalChecked());
     }
   }
   else{

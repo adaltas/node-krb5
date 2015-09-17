@@ -1,6 +1,6 @@
 {
   "name": "krb5",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Kerberos library for Node.js, with Spnego Wrapping",
   "main": "./lib/index.js",
   "license": "BSD-3-Clause",
@@ -12,7 +12,8 @@
     "authentication"
   ],
   "dependencies": {
-    "bindings": "latest"
+    "bindings": "latest",
+    "nan": "latest"
   },
   "devDependencies": {
     "coffee-script": "latest",

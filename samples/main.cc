@@ -1,9 +1,9 @@
 #include "../krb5.h"
 
-#define USER "pierre"
-#define REALM "HADOOP.ADALTAS.COM"
-#define SERVER "hadoop.adaltas.com"
-#define PASSWD "pierre123"
+#define USER "user"
+#define REALM "KERBEROS_REALM.MYDOMAIN.COM"
+#define SERVER "server.mydomain.com"
+#define PASSWD "password"
 
 using namespace std;
 

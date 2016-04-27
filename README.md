@@ -24,7 +24,7 @@ npm install
 
 To compile this library in windows, you need a complete visual studio compile
 chain, please refer to this [webpage][visual studio]. If you have a 32 bit OS,
-please delete binding.gyp and rename _binding32.gyp before install.
+please delete binding.gyp and rename \_binding32.gyp before install.
 
 ## Mac OS X
 
@@ -106,4 +106,3 @@ for more example, see the [samples directory][samples].
 [MIT Kerberos Dist]: http://web.mit.edu/kerberos/dist/
 [visual studio]:https://github.com/TooTallNate/node-gyp/wiki/Visual-Studio-2010-Setup
 [samples]: https://github.com/adaltas/node-krb5/tree/master/samples
-

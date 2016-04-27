@@ -1,6 +1,6 @@
 
 fs = require 'fs'
-krb5 = require '../build/Release/krb5'
+krb5 = require('bindings')('krb5')
 
 module.exports = (options, callback) ->
   k = new Krb5 options
@@ -17,9 +17,7 @@ module.exports.spnego = (options, callback) ->
   k = new Krb5 options
   k.kinit (err) ->
     return callback err if err
-    k.token options.service_principal, (err, token) ->
-      err = Error k.err if k.err
-      callback err, token
+    k.token options.service_principal, callback
   k
 
 ###
@@ -46,8 +44,8 @@ Krb5::kinitSync = () ->
     else if stat.isDirectory()
       @options.ccname =+ "DIR:"
     else return throw Error 'Invalid Option "ccname"'
-  throw Error 'principal not set' unless @principal?
-  [user, realm] = @principal.split '@'
+  throw Error 'principal not set' unless @options.principal?
+  [user, realm] = @options.principal.split '@'
   if @options.ccname?
     process.env.KRB5CCNAME = @options.ccname
     @k.initSync user, realm, @options.ccname.split(':')[1]
@@ -59,8 +57,8 @@ Krb5::kinitSync = () ->
     @k.getCredentialsByKeytabSync @options.keytab
   else
     @k.getCredentialsByKeytabSync
-Krb5::kinit = (next) ->
-  return next Error 'Missing Property "principal"' unless @options.principal?
+Krb5::kinit = (callback) ->
+  return callback Error 'Missing Property "principal"' unless @options.principal?
   do_ccname = =>
     return do_kinit() if not @options.ccname or @options.ccname.indexOf(':') isnt -1
     fs.stat @options.ccname, (err, stat) ->
@@ -68,12 +66,12 @@ Krb5::kinit = (next) ->
         @options.ccname =+ "FILE:"
       else if stat.isDirectory()
         @options.ccname =+ "DIR:"
-      else return next Error 'Invalid Option "ccname"'
+      else return callback Error 'Invalid Option "ccname"'
       process.env.KRB5CCNAME = @options.ccname if @options.ccname
       do_kinit()
   do_kinit = =>
     [user, realm] = @options.principal.split '@'
-    @k.init ((err) -> if err then next(err) else do_credential()), user, realm
+    @k.init user, realm, ((err) -> if err then callback err else do_credential())
   do_credential = =>
     if @options.password?
       method = 'getCredentialsByPassword'
@@ -82,35 +80,35 @@ Krb5::kinit = (next) ->
       method = 'getCredentialsByKeytab'
       param = @options.keytab
     else
-      next Error 'Invalid arguments'
-    @k[method] next, param
+      callback Error 'Invalid arguments'
+    @k[method] param, callback
   do_ccname()
 Krb5::kdestroySync = (cache) ->
   return if cache? then @k.destroySync cache else @k.destroySync()
-Krb5::kdestroy = (cache, next) ->
+Krb5::kdestroy = (cache, callback) ->
   if typeof cache is 'function'
-    next = cache
+    callback = cache
     cache = null
-  if cache? then @k.destroy next, cache else @k.destroy next
+  if cache? then @k.destroy cache, callback else @k.destroy callback
 Krb5::tokenSync = (service_principal_or_fqdn) ->
   service_principal_or_fqdn ?= @options.service_principal
   service_principal_or_fqdn ?= @options.service_fqdn
-  return next Error 'Missing property "service_principal" or "service_fqdn"' unless service_principal_or_fqdn
-  service_principal_or_fqdn = "HTTP/#{service_principal_or_fqdn}" unless /HTTP[@\/]/.test service_principal_or_fqdn
+  throw Error 'Missing property "service_principal" or "service_fqdn"' unless service_principal_or_fqdn
+  service_principal_or_fqdn = "HTTP@#{service_principal_or_fqdn}" unless /HTTP[@\/]/.test service_principal_or_fqdn
   @k.generateSpnegoTokenSync service_principal_or_fqdn
-Krb5::token = (service_principal_or_fqdn, next) ->
+Krb5::token = (service_principal_or_fqdn, callback) ->
   if arguments.length is 1
-    next = service_principal_or_fqdn
+    callback = service_principal_or_fqdn
     service_principal_or_fqdn = null
   ts = Date.now()
   if @last_token_ts is ts
     return setTimeout =>
-      @token service_principal_or_fqdn, next
+      @token service_principal_or_fqdn, callback
     , 1
   @last_token_ts = ts
   service_principal_or_fqdn ?= @options.service_principal
   service_principal_or_fqdn ?= @options.service_fqdn
-  return next Error 'Missing property "service_principal" or "service_fqdn"' unless service_principal_or_fqdn
+  return callback Error 'Missing property "service_principal" or "service_fqdn"' unless service_principal_or_fqdn
   service_principal_or_fqdn = "HTTP@#{service_principal_or_fqdn}" unless /HTTP[@\/]/.test service_principal_or_fqdn
-  @k.generateSpnegoToken next, service_principal_or_fqdn
+  @k.generateSpnegoToken service_principal_or_fqdn, callback
 

@@ -27,6 +27,7 @@ var argv = yargs
 
 var options = url.parse(argv.url);
 var http = require(options.protocol.substr(0, options.protocol.length-1));
+
 if(options.protocol === 'https:'){
   options.rejectUnauthorized = false
 }

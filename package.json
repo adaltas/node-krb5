@@ -1,6 +1,6 @@
 {
   "name": "krb5",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "Kerberos library for Node.js, with Spnego Wrapping",
   "main": "./lib/index.js",
   "license": "BSD-3-Clause",
@@ -11,13 +11,16 @@
     "spnego",
     "authentication"
   ],
+  "dependencies": {
+    "bindings": "latest",
+    "nan": "latest"
+  },
   "devDependencies": {
     "coffee-script": "latest",
     "yargs": "latest"
   },
   "scripts": {
-    "coffee": "./node_modules/.bin/coffee -b -o lib src",
-    "preinstall": "./node_modules/.bin/coffee -b -o lib src",
+    "prepublish": "./node_modules/.bin/coffee -b -o lib src",
     "install": "node-gyp rebuild"
   },
   "author": {

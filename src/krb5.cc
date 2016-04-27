@@ -1,3 +1,6 @@
+#include <sys/stat.h>
+#include <cstdio>
+#include <cstring>
 #include "krb5.h"
 
 static gss_OID_desc _gss_mech_spnego = {6, (void*)"\x2b\x06\x01\x05\x05\x02"}; //Spnego OID: 1.3.6.1.5.5.2
@@ -8,6 +11,22 @@ bool exists(const char* path){
   return (stat(path, &buffer) == 0);
 }
 
+Krb5::Krb5(){
+  this->spnego_token=NULL;
+  this->err=0;
+  this->err = krb5_init_secure_context(&this->context);
+  this->cred = (krb5_creds*)malloc(sizeof(krb5_creds));
+  memset(this->cred, 0, sizeof(krb5_creds));
+  if(this->err) {
+    this->cleanup(1);
+  }
+}
+
+Krb5::~Krb5() {
+  this->cleanup();
+}
+
+//Kinit function
 krb5_error_code Krb5::init(const char* user, const char* realm){
   if(!realm || !user){
     this->err = -1;
@@ -19,14 +38,17 @@ krb5_error_code Krb5::init(const char* user, const char* realm){
     this->err = -1;
     return this->err;
   }
+  //Create user principal (user@realm) from user and realm
   this->err = krb5_build_principal(this->context, &this->client_principal, len_realm, realm, user, NULL);
   if(this->err) {
     return this->cleanup(2);
   }
+  //Get default credential cache
   this->err = krb5_cc_default(this->context, &this->cache);
   if(this->err) {
     return this->cleanup(3);
   }
+  //If default cache does'nt exist, we initialize it
   if(!exists(krb5_cc_get_name(this->context, this->cache))){
     this->err = krb5_cc_initialize(this->context, this->cache, this->client_principal);
     if(this->err) {
@@ -50,17 +72,6 @@ krb5_error_code Krb5::destroy(const char* name){
   return this->err;
 }
 
-Krb5::Krb5(){
-  this->spnego_token=NULL;
-  this->err=0;
-  this->err = krb5_init_secure_context(&this->context);
-  this->cred = (krb5_creds*)malloc(sizeof(krb5_creds));
-  memset(this->cred, 0, sizeof(krb5_creds));
-  if(this->err) {
-    this->cleanup(1);
-  }
-}
-
 krb5_error_code Krb5::cleanup(int level) {
   switch(level) {
   default:
@@ -77,8 +88,12 @@ krb5_error_code Krb5::cleanup(int level) {
   return this->err;
 }
 
-Krb5::~Krb5() {
-  this->cleanup(0);
+void Krb5::init_custom_error(krb5_error_code errCode, const char* msg){
+  krb5_set_error_message(this->context, errCode, msg);
+}
+
+void Krb5::set_error(krb5_error_code errCode){
+  this->err = errCode;
 }
 
 const char* Krb5::get_error_message(){
@@ -126,23 +141,21 @@ krb5_error_code Krb5::get_credentials_by_keytab(const char* keytabName) {
   return this->err;
 }
 
-
-krb5_error_code Krb5::get_credentials_by_password(char* password) {
+krb5_error_code Krb5::get_credentials_by_password(const char* password) {
   if(!this->err){
     this->err = krb5_get_init_creds_password(this->context,this->cred,this->client_principal,password, NULL, NULL, 0, NULL, NULL);
     if(this->err) {
-      this->cleanup(6);
+      this->cleanup();
       return this->err;
     }
     this->err = krb5_cc_store_cred(this->context, this->cache, this->cred);
     if(this->err) {
-      this->cleanup(6);
+      this->cleanup();
       return this->err;
     }
   }
   return this->err;
 }
-
 
 OM_uint32 Krb5::import_name(const char* principal, gss_name_t* desired_name) {
   OM_uint32 ret;
@@ -156,286 +169,59 @@ OM_uint32 Krb5::import_name(const char* principal, gss_name_t* desired_name) {
 Get the Base64-encoded token
 */
 OM_uint32 Krb5::generate_spnego_token(const char* server) {
-  char token_buffer[2048];
   gss_ctx_id_t gss_context = GSS_C_NO_CONTEXT;
   gss_buffer_desc input_buf,output_buf;
-
   gss_name_t target_name;
-  OM_uint32 err;
-
-  err = import_name(server,&target_name);
-  if(err) {
-    return this->cleanup(8);
-  }
-
-  err = gss_init_sec_context((OM_uint32*)&this->err,
-                             GSS_C_NO_CREDENTIAL,
-                             &gss_context,
-                             target_name,
-                             GSS_MECH_SPNEGO,
-                             GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG,
-                             GSS_C_INDEFINITE,
-                             GSS_C_NO_CHANNEL_BINDINGS,
-                             &input_buf,
-                             NULL,
-                             &output_buf,
-                             NULL,
-                             NULL);
-
-  encode64((char*)output_buf.value,token_buffer,output_buf.length);
+  OM_uint32 gss_err;
   if(this->spnego_token){
     free(this->spnego_token);
   }
-  this->spnego_token = (char*) malloc(strlen(token_buffer)+1);
-  strcpy(this->spnego_token, token_buffer);
-  gss_release_name((OM_uint32*)&this->err, &target_name);
-  return 0;
-}
-#ifdef NODEGYP
-/** NODE.JS Binding **/
-
-template<typename T>
-UvBaton<T>::UvBaton(const v8::Arguments& args){
-  this->request.data = this;
-  this->wrapper = node::ObjectWrap::Unwrap<T>(args.This());
-  this->length = args.Length()-1;
-  this->callback = Persistent<Function>::New(Handle<Function>::Cast(args[0]));
-  this->args = (char**)malloc(this->length*sizeof(char*));
-  for(unsigned int i=0; i< this->length; i++){
-    v8::String::Utf8Value params(args[i+1]->ToString());
-    this->args[i] = (char*)malloc(strlen(*params)+1);
-    strcpy(this->args[i],*params);
+  gss_err = import_name(server,&target_name);
+  if(gss_err) {
+    return this->cleanup();
   }
-}
-template<typename T>
-UvBaton<T>::~UvBaton(){
-  for(unsigned int i=0; i<this->length; i++){
-    free(this->args[i]);
-  }
-  free(this->args);
-  this->callback.Dispose();
-}
-//A 'non' setter. V8 cannot bind getter without setter. We use this empty setter to avoid data modification
-void nonSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info) {
-}
-
-void Krb5::Initialize(v8::Handle<v8::Object> target) {
-  v8::HandleScope scope; // used by v8 for garbage collection
-  // Our constructor
-  v8::Local<FunctionTemplate> t = v8::FunctionTemplate::New(Krb5::New);
-  t->InstanceTemplate()->SetInternalFieldCount(1);
-  t->SetClassName(v8::String::NewSymbol("Krb5"));
-  // Our getters and setters
-  t->InstanceTemplate()->SetAccessor(String::New("token"), Krb5::getToken, nonSetter);
-  t->InstanceTemplate()->SetAccessor(String::New("err"), Krb5::getErr, nonSetter);
-
-  // Our methods async
-  NODE_SET_PROTOTYPE_METHOD(t, "init", Krb5::Init);
-  NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByKeytab", Krb5::ByKeyTab);
-  NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByPassword", Krb5::ByPassword);
-  NODE_SET_PROTOTYPE_METHOD(t, "generateSpnegoToken", Krb5::GenToken);
-  NODE_SET_PROTOTYPE_METHOD(t, "destroy", Krb5::Destroy);
-
-  //
-  NODE_SET_PROTOTYPE_METHOD(t, "initSync", Krb5::InitSync);
-  NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByKeytabSync", Krb5::ByKeyTabSync);
-  NODE_SET_PROTOTYPE_METHOD(t, "getCredentialsByPasswordSync", Krb5::ByPasswordSync);
-  NODE_SET_PROTOTYPE_METHOD(t, "generateSpnegoTokenSync", Krb5::GenTokenSync);
-  NODE_SET_PROTOTYPE_METHOD(t, "destroySync", Krb5::DestroySync);
-
-
-  Krb5::tpl = v8::Persistent<v8::FunctionTemplate>::New(t);
-
-  // Binding our constructor function to the target variable
-  target->Set(String::NewSymbol("Krb5"), t->GetFunction());
-}
-
-// This is our constructor function. It instantiate a C++ Gtknotify object and returns a Javascript handle to this object.
-v8::Handle<Value> Krb5::New(const v8::Arguments& args) {
-  Krb5* krb = new Krb5();
-  // Wrap our C++ object as a Javascript object
-  krb->Wrap(args.This());
-  // Our constructor function returns a Javascript object which is a wrapper for our C++ object,
-  // This is the expected behavior when calling a constructor function with the new operator in Javascript.
-  return args.This();
-}
-/** GETTER **/
-v8::Handle<v8::Value> Krb5::getToken(Local<v8::String> property, const v8::AccessorInfo& info){
-  Krb5* krb = node::ObjectWrap::Unwrap<Krb5>(info.Holder());
-  return v8::String::New(krb->spnego_token);
-}
-
-v8::Handle<v8::Value> Krb5::getErr(Local<v8::String> property, const v8::AccessorInfo& info){
-  Krb5* krb = node::ObjectWrap::Unwrap<Krb5>(info.Holder());
-  return v8::String::New(krb->get_error_message());
-}
-
-/** ASYNC Mode (TODO)  **/
-
-void GenTokenAsync(uv_work_t *request){
-  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
-  baton->wrapper->generate_spnego_token(baton->args[0]);
-}
-
-void GenTokenAfter(uv_work_t *request, int status){
-  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
-  Krb5* k = baton->wrapper;
-  if(k->err){
-    Handle<Value> argv[2] = {Local<Value>::New(String::New(k->get_error_message())),v8::Null()};
-    baton->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+  gss_err = gss_init_sec_context((OM_uint32*)&this->err,
+                  GSS_C_NO_CREDENTIAL,
+                  &gss_context,
+                  target_name,
+                  GSS_MECH_SPNEGO,
+                  GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG,
+                  GSS_C_INDEFINITE,
+                  GSS_C_NO_CHANNEL_BINDINGS,
+                  &input_buf,
+                  NULL,
+                  &output_buf,
+                  NULL,
+                  NULL);
+  if(!(GSS_ERROR(gss_err) || this->err)){
+    char token_buffer[2048];
+    encode64((char*)output_buf.value,token_buffer,output_buf.length);
+    this->spnego_token = new char[strlen(token_buffer)+1];
+    strcpy(this->spnego_token, token_buffer);
   }
   else{
-    Handle<Value> argv[2] = {v8::Null(),Local<Value>::New(String::New(k->spnego_token))};
-    baton->callback->Call(Context::GetCurrent()->Global(), 2, argv);
-  }
-  delete baton;
-}
-
-void InitAsync(uv_work_t *request){
-  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
-  baton->wrapper->init(baton->args[0], baton->args[1]);
-}
-
-void SendErrorAfter(uv_work_t *request, int status){
-  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
-  Handle<Value> argv[1];
-  Krb5* k = baton->wrapper;
-  if(k->err){
-    argv[0] = Local<Value>::New(String::New(k->get_error_message()));
-  }
-  else{
-    argv[0] = v8::Null();
-  }
-  baton->callback->Call(Context::GetCurrent()->Global(), 1, argv);
-  delete baton;
-}
-
-
-void ByPasswordAsync(uv_work_t *request){
-  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
-  baton->wrapper->get_credentials_by_password(baton->args[0]);
-}
-
-void ByKeytabAsync(uv_work_t *request){
-  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
-  if(baton->length>=1){
-    baton->wrapper->get_credentials_by_keytab(baton->args[0]);
-  }
-  else{
-    baton->wrapper->get_credentials_by_keytab();
-  }
-}
-
-void DestroyAsync(uv_work_t *request){
-  UvBaton<Krb5>* baton = static_cast<UvBaton<Krb5>*>(request->data);
-  if(baton->length>=1){
-    baton->wrapper->destroy(baton->args[0]);
-  }
-  else{
-    baton->wrapper->destroy();
-  }
-}
-
-v8::Handle<Value> AsyncFunction(const v8::Arguments& args, uv_work_cb asyncFunction, uv_after_work_cb afterFunction){
-  UvBaton<Krb5>* baton = new UvBaton<Krb5>(args);
-  uv_queue_work(uv_default_loop(), &baton->request, asyncFunction, afterFunction);
-  return Undefined();
-}
-
-
-v8::Handle<Value> Krb5::GenToken(const v8::Arguments& args) {
-  return AsyncFunction(args, GenTokenAsync, GenTokenAfter);
-}
-
-v8::Handle<Value> Krb5::Init(const v8::Arguments& args) {
-  return AsyncFunction(args, InitAsync,SendErrorAfter);
-}
-
-v8::Handle<Value> Krb5::ByPassword(const v8::Arguments& args) {
-  return AsyncFunction(args, ByPasswordAsync,SendErrorAfter);
-}
-
-v8::Handle<Value> Krb5::ByKeyTab(const v8::Arguments& args) {
-  return AsyncFunction(args, ByKeytabAsync, SendErrorAfter);
-}
-
-v8::Handle<Value> Krb5::Destroy(const v8::Arguments& args) {
-  return AsyncFunction(args, DestroyAsync, SendErrorAfter);
-}
-
-/** SYNC Mode **/
-
-v8::Handle<Value> Krb5::InitSync(const v8::Arguments& args) {
-  Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
-  v8::String::Utf8Value v8user(args[0]);
-  v8::String::Utf8Value v8realm(args[1]);
-  return v8::Integer::New(k->init(*v8user,*v8realm));
-}
-
-v8::Handle<Value> Krb5::ByPasswordSync(const v8::Arguments& args) {
-  // Extract C++ object reference from "this"
-  Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
-  if(args.Length()>=1){
-    v8::String::Utf8Value v8pass(args[0]);
-    v8::Handle<Value> ret = v8::Integer::New(k->get_credentials_by_password(*v8pass));
-    if(k->err){
-      ThrowException(Exception::TypeError(String::New(k->get_error_message())));
+    if(GSS_ERROR(gss_err) && !this->err){
+      char token_buffer[2048];
+      OM_uint32 message_context;
+      OM_uint32 min_status;
+      gss_buffer_desc status_string;
+      message_context = 0;
+      token_buffer[0] = '\0';
+      do {
+        gss_display_status(
+              &min_status,
+              gss_err,
+              GSS_C_GSS_CODE,
+              GSS_C_NO_OID,
+              &message_context,
+              &status_string);
+        strcat(token_buffer, (char *)status_string.value);
+        gss_release_buffer(&min_status, &status_string);
+      } while (message_context != 0);
+      this->init_custom_error(gss_err,token_buffer);
+      this->set_error(gss_err);
     }
-    return ret;
+    this->spnego_token = NULL;
   }
-  else{
-    ThrowException(Exception::TypeError(String::New("Wrong number of arguments, please add server_principal")));
-    return v8::Integer::New(-1);
-  }
+  return gss_err;
 }
-
-v8::Handle<Value> Krb5::ByKeyTabSync(const v8::Arguments& args) {
-  // Extract C++ object reference from "this"
-  Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
-  v8::Handle<Value> ret;
-  if(args.Length()>=1){
-    v8::String::Utf8Value v8kt(args[0]);
-    ret = v8::Integer::New(k->get_credentials_by_keytab(*v8kt));
-  }
-  else ret = v8::Integer::New(k->get_credentials_by_keytab());
-  if(k->err){
-    ThrowException(Exception::TypeError(String::New(k->get_error_message())));
-  }
-  return ret;
-}
-
-v8::Handle<Value> Krb5::GenTokenSync(const v8::Arguments& args) {
-  // Extract C++ object reference from "this"
-  Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
-  if(args.Length()==1){
-    v8::String::Utf8Value v8server_name(args[0]);
-    v8::Handle<Value> ret = v8::Integer::New(k->generate_spnego_token(*v8server_name));
-    if(k->err){
-      ThrowException(Exception::TypeError(String::New(k->get_error_message())));
-    }
-    return ret;
-  }
-  else{
-    ThrowException(Exception::TypeError(String::New("Wrong number of arguments, please add server_principal")));
-    return v8::Integer::New(-1);
-  }
-}
-
-v8::Handle<Value> Krb5::DestroySync(const v8::Arguments& args) {
-  // Extract C++ object reference from "this"
-  Krb5* k = node::ObjectWrap::Unwrap<Krb5>(args.This());
-  v8::Handle<Value> ret;
-  if(args.Length()==1){
-    v8::String::Utf8Value v8cache_name(args[0]);
-    ret = v8::Integer::New(k->destroy(*v8cache_name));
-  }
-  else{
-    ret = v8::Integer::New(k->destroy());
-  }
-  if(k->err){
-    ThrowException(Exception::TypeError(String::New(k->get_error_message())));
-  }
-  return ret;
-}
-
-#endif

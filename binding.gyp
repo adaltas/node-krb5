@@ -5,7 +5,10 @@
       "cflags!": [ "-fno-exceptions" ],
       "cflags_cc!": [ "-fno-exceptions" ],
       "defines" : ["NODEGYP"],
-      "sources": ["src/krb5.cc","src/base64.cc"],
+      "sources": ["src/base64.cc","src/krb5.cc","src/bind.cc","src/worker.cc","src/addon.cc"],
+      "include_dirs": [
+        "<!(node -e \"require('nan')\")"
+      ],
       "conditions": [
         [
           "OS=='win'",

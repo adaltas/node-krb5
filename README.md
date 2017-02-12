@@ -46,10 +46,9 @@ Unless you specify the "--prefix" option to `configure`, the library will be
 installed inside "/usr/local".
 
 ```bash
-wget http://web.mit.edu/kerberos/dist/krb5/1.13/krb5-1.13-signed.tar
-tar -xf krb5-1.13-signed.tar
-tar -xzf krb5-1.13.tar.gz
-cd krb5-1.13/src
+wget http://web.mit.edu/kerberos/dist/krb5/1.15/krb5-1.15-beta1.tar.gz 
+tar -xzf krb5-1.15-beta1.tar.gz 
+cd krb5-1.15-beta1/src
 ./configure
 make
 sudo make install

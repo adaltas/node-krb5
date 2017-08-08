@@ -13,13 +13,12 @@ bool exists(const char* path){
 
 Krb5::Krb5(){
   this->spnego_token=NULL;
+  this->client_principal=NULL;
+  this->cache=NULL;
   this->err=0;
   this->err = krb5_init_secure_context(&this->context);
   this->cred = (krb5_creds*)malloc(sizeof(krb5_creds));
   memset(this->cred, 0, sizeof(krb5_creds));
-  if(this->err) {
-    this->cleanup(1);
-  }
 }
 
 Krb5::~Krb5() {
@@ -41,18 +40,18 @@ krb5_error_code Krb5::init(const char* user, const char* realm){
   //Create user principal (user@realm) from user and realm
   this->err = krb5_build_principal(this->context, &this->client_principal, len_realm, realm, user, NULL);
   if(this->err) {
-    return this->cleanup(2);
+    return this->cleanup();
   }
   //Get default credential cache
   this->err = krb5_cc_default(this->context, &this->cache);
   if(this->err) {
-    return this->cleanup(3);
+    return this->cleanup();
   }
   //If default cache does'nt exist, we initialize it
   if(!exists(krb5_cc_get_name(this->context, this->cache))){
     this->err = krb5_cc_initialize(this->context, this->cache, this->client_principal);
     if(this->err) {
-      return this->cleanup(4);
+      return this->cleanup();
     }
   }
   return this->err;
@@ -73,19 +72,15 @@ krb5_error_code Krb5::destroy(const char* name){
 }
 
 krb5_error_code Krb5::cleanup(int level) {
-  switch(level) {
-  default:
-  case 0:
-  case 4:
-    krb5_cc_close(this->context, this->cache);
-  case 3:
-    krb5_free_principal(this->context,this->client_principal);
-  case 2:
+  if(this->context)
     krb5_free_context(this->context);
-  case 1:
-    break;
-  }
-  return this->err;
+  if(this->client_principal)
+    krb5_free_principal(this->context,this->client_principal);
+  if(this->cache)
+    krb5_cc_close(this->context, this->cache);
+  if(this->spnego_token)
+    free(this->spnego_token);
+  return 0;
 }
 
 void Krb5::init_custom_error(krb5_error_code errCode, const char* msg){
@@ -120,21 +115,21 @@ krb5_error_code Krb5::get_credentials_by_keytab(const char* keytabName) {
       this->err = krb5_kt_default(this->context,&keytab);
     }
     if(this->err) {
-      return this->cleanup(5);
+      return this->cleanup();
     }
     this->err = krb5_get_init_creds_keytab(context, cred, client_principal, keytab, 0, NULL, NULL);
     if(this->err) {
-      return this->cleanup(6);
+      return this->cleanup();
     }
     this->err = krb5_verify_init_creds(this->context,this->cred,NULL, NULL, NULL, NULL);
     if(this->err) {
-      this->cleanup(6);
+      this->cleanup();
       return this->err;
     }
     this->err = krb5_cc_store_cred(this->context, this->cache, this->cred);
 
     if(this->err) {
-      this->cleanup(6);
+      this->cleanup();
       return this->err;
     }
   }

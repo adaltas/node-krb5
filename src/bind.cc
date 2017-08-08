@@ -66,7 +66,8 @@ void Krb5Wrap::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
     const int argc = 0;
     v8::Local<v8::Value> argv[argc] = {};
     v8::Local<v8::Function> cons = Nan::New<v8::Function>(constructor);
-    info.GetReturnValue().Set(cons->NewInstance(argc, argv));
+    Nan::MaybeLocal<v8::Object> maybeInstance = Nan::NewInstance(cons, argc, argv);
+    info.GetReturnValue().Set(maybeInstance.ToLocalChecked());
   }
 }
 

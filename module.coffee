@@ -22,8 +22,6 @@ krb.krb5_init_context (err, ctx) ->
         if err
           console.log 'Error: cannot retrieve default ccache'
           return
-        ccache_name = krb.krb5_cc_get_name_sync ctx, ccache
-        console.log ccache_name
 
         krb.krb5_cc_initialize ctx, ccache, princ, (err) ->
           if err
@@ -32,6 +30,7 @@ krb.krb5_init_context (err, ctx) ->
           ccache_name = krb.krb5_cc_get_name_sync ctx, ccache
           console.log ccache_name
 
+          krb.krb5_free_context ctx, ->
 
 
 # To generate js file:

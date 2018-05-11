@@ -27,7 +27,7 @@ class Worker_krb5_build_principal : public Napi::AsyncWorker {
 
       Callback().Call({
         Napi::Number::New(Env(), err),
-        Napi::External<krb5_principal>::New(Env(), &princ)
+        Napi::External<struct krb5_principal_data>::New(Env(), princ)
       });
     }
 
@@ -48,7 +48,7 @@ Napi::Value _krb5_build_principal(const Napi::CallbackInfo& info) {
       "5 arguments expected : context, rlen, realm, user, callback");
   }
 
-  krb5_context krb_context = *info[0].As<Napi::External<krb5_context>>().Data();
+  krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
   uint rlen = info[1].As<Napi::Number>().Uint32Value();
   const char* realm = info[2].As<Napi::String>().Utf8Value().c_str();
   const char* user = info[3].As<Napi::String>().Utf8Value().c_str();
@@ -83,7 +83,7 @@ class Worker_krb5_cc_default: public Napi::AsyncWorker {
 
       Callback().Call({
         Napi::Number::New(Env(), err),
-        Napi::External<krb5_ccache>::New(Env(), &ccache)
+        Napi::External<struct _krb5_ccache>::New(Env(), ccache)
       });
     }
 
@@ -100,7 +100,7 @@ Napi::Value _krb5_cc_default(const Napi::CallbackInfo& info) {
      throw Napi::TypeError::New(info.Env(), "2 argument expected");
   }
 
-  krb5_context krb_context = *info[0].As<Napi::External<krb5_context>>().Data();
+  krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
   Napi::Function callback = info[1].As<Napi::Function>();
 
   Worker_krb5_cc_default* worker = new Worker_krb5_cc_default(krb_context, callback);
@@ -117,8 +117,8 @@ Napi::Value _krb5_cc_get_name_sync(const Napi::CallbackInfo& info) {
      throw Napi::TypeError::New(info.Env(), "2 argument expected");
   }
 
-  krb5_context krb_context = *info[0].As<Napi::External<krb5_context>>().Data();
-  krb5_ccache krb_ccache = *info[1].As<Napi::External<krb5_ccache>>().Data();
+  krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
+  krb5_ccache krb_ccache = info[1].As<Napi::External<struct _krb5_ccache>>().Data();
 
   const char* cc_name = krb5_cc_get_name(krb_context, krb_ccache);
 
@@ -134,12 +134,10 @@ Napi::Value _krb5_cc_initialize_sync(const Napi::CallbackInfo& info) {
      throw Napi::TypeError::New(info.Env(), "3 argument expected");
   }
 
-  krb5_context krb_context = *info[0].As<Napi::External<krb5_context>>().Data();
-  krb5_ccache krb_ccache = *info[1].As<Napi::External<krb5_ccache>>().Data();
-  krb5_principal krb_princ = *info[2].As<Napi::External<krb5_principal>>().Data();
+  krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
+  krb5_ccache krb_ccache = info[1].As<Napi::External<struct _krb5_ccache>>().Data();
+  krb5_principal krb_princ = info[2].As<Napi::External<struct krb5_principal_data>>().Data();
 
-
-  std::cout << "cc_init_sync : " << krb_context << std::endl;
   krb5_error_code err = krb5_cc_initialize(krb_context, krb_ccache, krb_princ);
 
   return Napi::Number::New(info.Env(), err);
@@ -162,7 +160,6 @@ class Worker_krb5_cc_initialize : public Napi::AsyncWorker {
 
   private:
     void Execute() {
-      std::cout << "cc_init : " << krb_context << std::endl;
       err = krb5_cc_initialize(krb_context, krb_ccache, krb_princ);
       assert(!err);
     }
@@ -189,9 +186,9 @@ Napi::Value _krb5_cc_initialize(const Napi::CallbackInfo& info) {
     throw Napi::TypeError::New(info.Env(), "4 arguments expected");
   }
 
-  krb5_context krb_context = *info[0].As<Napi::External<krb5_context>>().Data();
-  krb5_ccache krb_ccache = *info[1].As<Napi::External<krb5_ccache>>().Data();
-  krb5_principal krb_princ = *info[2].As<Napi::External<krb5_principal>>().Data();
+  krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
+  krb5_ccache krb_ccache = info[1].As<Napi::External<struct _krb5_ccache>>().Data();
+  krb5_principal krb_princ = info[2].As<Napi::External<struct krb5_principal_data>>().Data();
   Napi::Function callback = info[3].As<Napi::Function>();
 
 
@@ -232,7 +229,7 @@ Napi::Value _krb5_free_context(const Napi::CallbackInfo& info) {
     throw Napi::TypeError::New(info.Env(), "2 arguments expected");
   }
 
-  krb5_context krb_context = *info[0].As<Napi::External<krb5_context>>().Data();
+  krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
   Napi::Function callback = info[1].As<Napi::Function>();
 
   Worker_krb5_free_context* worker = new Worker_krb5_free_context(krb_context, callback);
@@ -252,7 +249,6 @@ class Worker_krb5_get_default_realm : public Napi::AsyncWorker {
 
   private:
     void Execute() {
-      std::cout << "realm_init : " << context << std::endl;
       err = krb5_get_default_realm(context, &realm);
     }
 
@@ -278,7 +274,7 @@ Napi::Value _krb5_get_default_realm(const Napi::CallbackInfo& info) {
      throw Napi::TypeError::New(info.Env(), "2 argument expected");
   }
 
-  krb5_context krb_context = *info[0].As<Napi::External<krb5_context>>().Data();
+  krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
   Napi::Function callback = info[1].As<Napi::Function>();
 
   Worker_krb5_get_default_realm* worker = new Worker_krb5_get_default_realm(krb_context, callback);
@@ -299,7 +295,6 @@ class Worker_krb5_init_context : public Napi::AsyncWorker {
   private:
     void Execute() {
       err = krb5_init_context(&context);
-      std::cout << "init : " << context << std::endl;
     }
 
     void OnOK() {
@@ -307,7 +302,7 @@ class Worker_krb5_init_context : public Napi::AsyncWorker {
 
       Callback().Call({
         Napi::Number::New(Env(), err),
-        Napi::External<krb5_context>::New(Env(), &context)
+        Napi::External<struct _krb5_context>::New(Env(), context)
       });
     }
 

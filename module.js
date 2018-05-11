@@ -22,25 +22,19 @@ krb.krb5_init_context(function(err, ctx) {
       }
       console.log('Principal build');
       return krb.krb5_cc_default(ctx, function(err, ccache) {
-        var ccache_name;
         if (err) {
           console.log('Error: cannot retrieve default ccache');
           return;
         }
-        ccache_name = krb.krb5_cc_get_name_sync(ctx, ccache);
-        console.log(ccache_name);
-        err = krb.krb5_cc_initialize_sync(ctx, ccache, princ);
-        if (err) {
-          console.log('Cannot initialize cc (sync)');
-          return;
-        }
         return krb.krb5_cc_initialize(ctx, ccache, princ, function(err) {
+          var ccache_name;
           if (err) {
             console.log('Cannot initialize credential cache');
             return;
           }
           ccache_name = krb.krb5_cc_get_name_sync(ctx, ccache);
-          return console.log(ccache_name);
+          console.log(ccache_name);
+          return krb.krb5_free_context(ctx, function() {});
         });
       });
     });

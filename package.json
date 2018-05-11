@@ -1,8 +1,16 @@
 {
   "name": "krb5",
-  "version": "0.2.0",
-  "description": "Kerberos library for Node.js, with Spnego Wrapping",
-  "main": "./lib/index.js",
+  "version": "0.3.0",
+  "description": "Kerberos library bindings for NodeJs",
+  "scripts": {
+    "install": "node-gyp rebuild"
+  },
+  "dependencies": {
+    "bindings": "latest",
+    "node-addon-api": "latest"
+  },
+  "gypfile": true,
+  "author": "",
   "license": "BSD-3-Clause",
   "keywords": [
     "kerberos",
@@ -10,20 +18,5 @@
     "gssapi",
     "spnego",
     "authentication"
-  ],
-  "dependencies": {
-    "bindings": "latest",
-    "nan": "latest"
-  },
-  "devDependencies": {
-    "coffee-script": "latest",
-    "yargs": "latest"
-  },
-  "scripts": {
-    "prepublish": "./node_modules/.bin/coffee -b -o lib src",
-    "install": "node-gyp rebuild"
-  },
-  "author": {
-    "name": "Pierre Sauvage"
-  }
+  ]
 }

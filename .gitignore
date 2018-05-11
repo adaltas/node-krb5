@@ -3,5 +3,5 @@
 /lib
 *.log
 .*
-/index.js
 !.gitignore
+.vscode/

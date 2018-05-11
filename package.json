@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "description": "Kerberos library bindings for NodeJs",
   "scripts": {
-    "install": "node-gyp rebuild"
+    "install": "node-gyp rebuild --debug"
   },
   "dependencies": {
     "bindings": "latest",

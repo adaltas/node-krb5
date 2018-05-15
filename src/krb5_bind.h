@@ -1,9 +1,12 @@
 #include <napi.h>
 #include <krb5.h>
+#include <string>
 //For debug
 #include <iostream>
 #include <assert.h>
-
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
 
 Napi::Value _krb5_build_principal(const Napi::CallbackInfo& info);
 Napi::Value _krb5_cc_default(const Napi::CallbackInfo& info);
@@ -12,4 +15,7 @@ Napi::Value _krb5_cc_initialize(const Napi::CallbackInfo& info);
 Napi::Value _krb5_cc_initialize_sync(const Napi::CallbackInfo& info);
 Napi::Value _krb5_free_context(const Napi::CallbackInfo& info);
 Napi::Value _krb5_get_default_realm(const Napi::CallbackInfo& info);
+Napi::Value _krb5_get_init_creds_password(const Napi::CallbackInfo& info);
 Napi::Value _krb5_init_context(const Napi::CallbackInfo& info);
+
+Napi::Value _krb5_get_default_realm_sync(const Napi::CallbackInfo& info);

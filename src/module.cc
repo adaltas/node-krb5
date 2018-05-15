@@ -9,8 +9,9 @@ Napi::Object init(Napi::Env env, Napi::Object exports) {
     exports.Set(Napi::String::New(env, "krb5_cc_initialize_sync"), Napi::Function::New(env, _krb5_cc_initialize_sync));
     exports.Set(Napi::String::New(env, "krb5_free_context"), Napi::Function::New(env, _krb5_free_context));
     exports.Set(Napi::String::New(env, "krb5_get_default_realm"), Napi::Function::New(env, _krb5_get_default_realm));
+    exports.Set(Napi::String::New(env, "krb5_get_default_realm_sync"), Napi::Function::New(env, _krb5_get_default_realm_sync));
+    exports.Set(Napi::String::New(env, "krb5_get_init_creds_password"), Napi::Function::New(env, _krb5_get_init_creds_password));
     exports.Set(Napi::String::New(env, "krb5_init_context"), Napi::Function::New(env, _krb5_init_context));
-
     return exports;
 };
 

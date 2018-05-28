@@ -2,9 +2,7 @@
   "name": "krb5",
   "version": "0.3.0",
   "description": "Kerberos library bindings for NodeJs",
-  "scripts": {
-    "install": "node-gyp rebuild --debug"
-  },
+  "main": "./lib",
   "dependencies": {
     "bindings": "latest",
     "node-addon-api": "latest"
@@ -18,5 +16,9 @@
     "gssapi",
     "spnego",
     "authentication"
-  ]
+  ],
+  "scripts": {
+    "coffee": "./node_modules/.bin/coffee -b -o lib/krb5 src",
+    "rebuild": "node-gyp rebuild --debug"
+  }
 }

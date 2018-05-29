@@ -5,6 +5,7 @@
   "main": "./lib",
   "dependencies": {
     "bindings": "latest",
+    "mocha": "latest",
     "node-addon-api": "latest"
   },
   "gypfile": true,

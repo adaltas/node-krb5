@@ -41,14 +41,6 @@ kinit = (options, callback) ->
 
         cc_path = k.krb5_cc_get_name_sync ctx, ccache
         fs.exists cc_path, (exists) ->
-          store_creds_password = () ->
-            k.krb5_get_init_creds_password ctx, princ, options.password, (err, creds) ->
-              return handle_error(callback, err, ctx, princ, ccache) if err
-              k.krb5_cc_store_cred ctx, ccache, creds, (err) ->
-                return handle_error(callback, err, ctx, princ, ccache) if err
-                cc_path = k.krb5_cc_get_name_sync ctx, ccache
-                callback 0, { cc_path }
-        
           create_cc = (create_cc_callback) ->
             if !exists
               k.krb5_cc_initialize ctx, ccache, princ, (err) ->
@@ -57,9 +49,26 @@ kinit = (options, callback) ->
             else
               create_cc_callback()
 
-          if options.password
-            create_cc(store_creds_password)
+          get_creds_password = () ->
+            k.krb5_get_init_creds_password ctx, princ, options.password, (err, creds) ->
+              return handle_error(callback, err, ctx, princ, ccache) if err
+              store_creds creds
 
+          get_creds_keytab = () ->
+            k.krb5_kt_resolve ctx, options.keytab, (err, kt) ->
+              return handle_error(callback, err, ctx, princ, ccache) if err
+              k.krb5_get_init_creds_keytab ctx, princ, kt, 0, (err, creds) ->
+                return handle_error(callback, err, ctx, princ, ccache) if err
+                store_creds creds
+                  
+          store_creds = (creds) ->
+            k.krb5_cc_store_cred ctx, ccache, creds, (err) ->
+              return handle_error(callback, err, ctx, princ, ccache) if err
+              cc_path = k.krb5_cc_get_name_sync ctx, ccache
+              callback 0, { cc_path }
+
+          create_cc if options.password then get_creds_password else get_creds_keytab
+          return
 
 module.exports = {
   kinit

@@ -241,7 +241,6 @@ Napi::Value _krb5_cc_initialize(const Napi::CallbackInfo& info) {
   krb5_principal krb_princ = info[2].As<Napi::External<struct krb5_principal_data>>().Data();
   Napi::Function callback = info[3].As<Napi::Function>();
 
-
   Worker_krb5_cc_initialize* worker = new Worker_krb5_cc_initialize(krb_context, 
                                                                     krb_ccache,
                                                                     krb_princ,
@@ -249,6 +248,7 @@ Napi::Value _krb5_cc_initialize(const Napi::CallbackInfo& info) {
   worker->Queue();
   return info.Env().Undefined();
 }
+
 
 /**
  * krb5_cc_store_cred
@@ -303,6 +303,7 @@ Napi::Value _krb5_cc_store_cred(const Napi::CallbackInfo& info) {
   worker->Queue();
   return info.Env().Undefined();
 }
+
 
 /**
  * krb5_free_context
@@ -411,22 +412,12 @@ Napi::Value _krb5_get_default_realm(const Napi::CallbackInfo& info) {
   krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
   Napi::Function callback = info[1].As<Napi::Function>();
 
-  Worker_krb5_get_default_realm* worker = new Worker_krb5_get_default_realm(krb_context, callback);
+  Worker_krb5_get_default_realm* worker = 
+    new Worker_krb5_get_default_realm(krb_context, callback);
   worker->Queue();
   return info.Env().Undefined();
 }
 
-Napi::Value _krb5_get_default_realm_sync(const Napi::CallbackInfo& info){
-  if (info.Length() < 1) {
-     throw Napi::TypeError::New(info.Env(), "1 argument expected");
-  }
-  krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
-
-  char* realm;  
-  krb5_error_code err = krb5_get_default_realm(krb_context, &realm);
-
-  return Napi::String::New(info.Env(), realm);
-}
 
 /**
  * krb5_get_error_message_sync
@@ -553,6 +544,139 @@ Napi::Value _krb5_init_context(const Napi::CallbackInfo& info) {
 
   Napi::Function callback = info[0].As<Napi::Function>();
   Worker_krb5_init_context* worker = new Worker_krb5_init_context(callback);
+  worker->Queue();
+  return info.Env().Undefined();
+}
+
+
+/**
+ * krb5_kt_resolve
+ */
+class Worker_krb5_kt_resolve : public Napi::AsyncWorker {
+  public:
+    Worker_krb5_kt_resolve(krb5_context ctx, 
+                           std::string kt_name, 
+                           Napi::Function& callback)
+      : Napi::AsyncWorker(callback), krb_context(ctx), 
+                                     kt_name(kt_name) {
+    }
+
+  private:
+    void Execute() {
+      err = krb5_kt_resolve(krb_context, kt_name.c_str(), &ktid);
+    }
+
+    void OnOK() {
+      Napi::HandleScope scope(Env());       
+
+      Callback().Call({
+        Napi::Number::New(Env(), err),
+        Napi::External<struct _krb5_kt>::New(Env(), ktid)
+      });
+    }
+    
+
+    // In parameters
+    krb5_context krb_context;
+    std::string kt_name;
+
+    // Out parameters 
+    krb5_error_code err;
+    krb5_keytab ktid;
+};
+
+Napi::Value _krb5_kt_resolve(const Napi::CallbackInfo& info) {
+  if (info.Length() < 3) {
+     throw Napi::TypeError::New(info.Env(), "3 argument expected");
+  }
+
+  krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
+  std::string name = info[1].As<Napi::String>().Utf8Value();
+  Napi::Function callback = info[2].As<Napi::Function>();
+
+  Worker_krb5_kt_resolve* worker = 
+    new Worker_krb5_kt_resolve(krb_context, name, callback);
+  worker->Queue();
+  return info.Env().Undefined();
+}
+
+
+/**
+ * krb5_get_init_creds_keytab
+ * missing param (nullptr): const char* in_tkt_service
+ * missing param (nullptr): krb5_get_init_creds_opt * k5_gic_options
+ */
+class Worker_krb5_get_init_creds_keytab : public Napi::AsyncWorker {
+  public:
+    Worker_krb5_get_init_creds_keytab(krb5_context ctx, 
+                                      krb5_principal princ,
+                                      krb5_keytab kt,
+                                      krb5_deltat start,
+                                      std::string tkt_service,
+                                      krb5_get_init_creds_opt * k5_gic_options,
+                                      Napi::Function& callback)
+      : Napi::AsyncWorker(callback), krb_context(ctx), 
+                                     krb_client(princ),
+                                     krb_kt(kt),
+                                     start_time(start),
+                                     krb_tkt_service(tkt_service),
+                                     krb_init_creds_opt(k5_gic_options) {
+    }
+
+  private:
+    void Execute() {
+      err = krb5_get_init_creds_keytab(krb_context,
+                                       &creds,
+                                       krb_client,
+                                       krb_kt,
+                                       start_time,
+                                       (krb_tkt_service == "") ? 
+                                         nullptr : krb_tkt_service.c_str(),
+                                       krb_init_creds_opt);
+    }
+
+    void OnOK() {
+      Napi::HandleScope scope(Env());       
+
+      Callback().Call({
+        Napi::Number::New(Env(), err),
+        Napi::Buffer<krb5_creds>::Copy(Env(), &creds, sizeof(creds))
+      });
+    }
+    
+
+    // In parameters
+    krb5_context krb_context;
+    krb5_principal krb_client;
+    krb5_keytab krb_kt;
+    krb5_deltat start_time;
+    std::string krb_tkt_service;
+    krb5_get_init_creds_opt* krb_init_creds_opt;
+
+    // Out parameters 
+    krb5_error_code err;
+    krb5_creds creds;
+};
+
+Napi::Value _krb5_get_init_creds_keytab(const Napi::CallbackInfo& info) {
+  if (info.Length() < 3) {
+     throw Napi::TypeError::New(info.Env(), "5 argument expected");
+  }
+
+  krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
+  krb5_principal krb_princ = info[1].As<Napi::External<struct krb5_principal_data>>().Data();
+  krb5_keytab krb_kt =  info[2].As<Napi::External<struct _krb5_kt>>().Data();
+  krb5_deltat start = info[3].As<Napi::Number>().Int32Value();
+  Napi::Function callback = info[4].As<Napi::Function>();
+
+  Worker_krb5_get_init_creds_keytab* worker = 
+    new Worker_krb5_get_init_creds_keytab(krb_context,
+                                          krb_princ,
+                                          krb_kt,
+                                          start,
+                                          "",   // std::string("") becomes nullptr
+                                          nullptr,
+                                          callback);
   worker->Queue();
   return info.Env().Undefined();
 }

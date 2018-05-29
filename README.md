@@ -3,7 +3,12 @@ Krb5 nodejs bindings and lib
 
 Debug build : 
 ```
-node-gyp rebuild --debug
+npm run-script rebuild; npm run-script coffee
+```
+
+Tests :
+```
+mocha test/*.coffee
 ```
 
 TODO : 

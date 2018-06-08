@@ -8,8 +8,8 @@ class Worker_krb5_build_principal : public Napi::AsyncWorker {
   public:
     Worker_krb5_build_principal(krb5_context ctx,
                                 uint rlen,
-                                const char* realm,
-                                const char* user,
+                                std::string realm,
+                                std::string user,
                                 Napi::Function& callback)
       : Napi::AsyncWorker(callback), context(ctx), 
                                      rlen(rlen), 
@@ -19,7 +19,24 @@ class Worker_krb5_build_principal : public Napi::AsyncWorker {
 
   private:
     void Execute() {
-      err = krb5_build_principal(context, &princ, rlen, realm, user, NULL);
+      auto pos = user.find("/");
+      if(pos != std::string::npos) {
+        err = krb5_build_principal(context,
+                                   &princ, 
+                                   rlen, 
+                                   realm.c_str(), 
+                                   user.substr(0, pos).c_str(), 
+                                   user.substr(pos+1, user.length()).c_str(),
+                                   NULL);
+      }
+      else {
+        err = krb5_build_principal(context, 
+                                   &princ, 
+                                   rlen, 
+                                   realm.c_str(), 
+                                   user.c_str(), 
+                                   NULL);
+      }
     }
 
     void OnOK() {
@@ -34,8 +51,8 @@ class Worker_krb5_build_principal : public Napi::AsyncWorker {
     // In parameters
     krb5_context context;
     uint rlen;
-    const char* realm;
-    const char* user;
+    std::string realm;
+    std::string user;
 
     // Out parameters
     krb5_error_code err;
@@ -57,8 +74,8 @@ Napi::Value _krb5_build_principal(const Napi::CallbackInfo& info) {
   Worker_krb5_build_principal* worker = 
     new Worker_krb5_build_principal(krb_context, 
                                     rlen,
-                                    realm.c_str(),
-                                    user.c_str(),
+                                    realm,
+                                    user,
                                     callback);
   worker->Queue();
   return info.Env().Undefined();

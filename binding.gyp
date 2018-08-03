@@ -4,6 +4,8 @@
 	  "sources": [
             "./src/module.cc",
             "./src/krb5_bind.cc",
+            "./src/gss_bind.cc",
+            "./src/base64.cc"
         ],
 	  'cflags!': [ '-fno-exceptions' ],
 	  'cflags_cc!': [ '-fno-exceptions' ],

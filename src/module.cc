@@ -1,4 +1,5 @@
 #include "krb5_bind.h"
+#include "gss_bind.h"
 
 
 Napi::Object init(Napi::Env env, Napi::Object exports) {
@@ -18,6 +19,8 @@ Napi::Object init(Napi::Env env, Napi::Object exports) {
     exports.Set(Napi::String::New(env, "krb5_get_init_creds_password"), Napi::Function::New(env, _krb5_get_init_creds_password));
     exports.Set(Napi::String::New(env, "krb5_init_context"), Napi::Function::New(env, _krb5_init_context));
     exports.Set(Napi::String::New(env, "krb5_kt_resolve"), Napi::Function::New(env, _krb5_kt_resolve));
+
+    exports.Set(Napi::String::New(env, "generate_spnego_token"), Napi::Function::New(env, _generate_spnego_token));
 Napi::Value _krb5_kt_resolve(const Napi::CallbackInfo& info);
     return exports;
 };

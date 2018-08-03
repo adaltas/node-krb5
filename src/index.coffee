@@ -70,6 +70,17 @@ kinit = (options, callback) ->
           create_cc if options.password then get_creds_password else get_creds_keytab
           return
 
+token = (options, callback) ->
+  service_principal_or_fqdn = null
+  service_principal_or_fqdn ?= options.service_principal
+  service_principal_or_fqdn ?= options.service_fqdn
+  return callback Error 'Missing property "service_principal" or "service_fqdn"' unless service_principal_or_fqdn
+  service_principal_or_fqdn = "HTTP@#{service_principal_or_fqdn}" unless /HTTP[@\/]/.test service_principal_or_fqdn
+
+  k.generate_spnego_token service_principal_or_fqdn, (gss_err, gss_minor, token) ->
+    callback(gss_err, gss_minor, token)
+
 module.exports = {
   kinit
+  token
 }

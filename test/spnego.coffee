@@ -11,7 +11,7 @@ k.kinit {
   console.log err
   console.log cc_path
   k.token {
-    service_principal: 'HTTP/m01.krb.local@KRB.LOCAL'
+    service_principal: 'm01.krb.local'
   }, (gss_err, gss_minor, token) ->
     console.log 'GSS Status', gss_err, '(', gss_minor, ')'
     console.log 'Token: ', token

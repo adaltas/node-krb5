@@ -18,13 +18,15 @@ handle_error = (callback, err, ctx, princ, ccache) ->
     return err
   err = k.krb5_get_error_message_sync(ctx, err)
   cleanup ctx, princ, ccache
-  callback(new Error(err), { cc_path: null })
+  return callback Error err
 
 
 kinit = (options, callback) ->
-  if !options.username || !options.realm
-    console.log 'Please specify user and realm for kinit'
-    return -1
+  if !options.username or !options.realm
+    return callback Error 'Please specify user and realm for kinit'
+    
+  if !options.password and !options.keytab
+    return callback Error 'Please specify password or keytab for kinit'
 
   k.krb5_init_context (err, ctx) ->
     return handle_error(callback, err, ctx) if err
@@ -36,11 +38,21 @@ kinit = (options, callback) ->
     (err, princ) ->
       return handle_error(callback, err, ctx, princ) if err
 
-      k.krb5_cc_default ctx, (err, ccache) ->
-        return handle_error(callback, err, ctx, princ, ccache) if err
+      if options.ccname
+        if options.ccname.indexOf(':KEYRING') != -1
+          cleanup ctx, princ
+          return callback Error 'KEYRING method not supported.'
+        k.krb5_cc_resolve ctx, options.ccname, (err, ccache) ->
+          return handle_error(callback, err, ctx, princ, ccache) if err
+          creds(ccache)
+      else
+        k.krb5_cc_default ctx, (err, ccache) ->
+          return handle_error(callback, err, ctx, princ, ccache) if err
+          creds(ccache)
 
-        cc_path = k.krb5_cc_get_name_sync ctx, ccache
-        fs.exists cc_path, (exists) ->
+      creds = (ccache) ->
+        ccname = k.krb5_cc_get_name_sync ctx, ccache
+        fs.exists ccname, (exists) ->
           create_cc = (create_cc_callback) ->
             if !exists
               k.krb5_cc_initialize ctx, ccache, princ, (err) ->
@@ -64,8 +76,8 @@ kinit = (options, callback) ->
           store_creds = (creds) ->
             k.krb5_cc_store_cred ctx, ccache, creds, (err) ->
               return handle_error(callback, err, ctx, princ, ccache) if err
-              cc_path = k.krb5_cc_get_name_sync ctx, ccache
-              callback 0, { cc_path }
+              ccname = k.krb5_cc_get_name_sync ctx, ccache
+              callback undefined, { ccname: ccname }
 
           create_cc if options.password then get_creds_password else get_creds_keytab
           return
@@ -78,9 +90,48 @@ spnego = (options, callback) ->
   service_principal_or_fqdn = "HTTP@#{service_principal_or_fqdn}" unless /HTTP[@\/]/.test service_principal_or_fqdn
 
   k.generate_spnego_token service_principal_or_fqdn, (gss_err, gss_minor, token) ->
-    callback(gss_err, token)
+    return callback (if gss_err is 0 then undefined else gss_err), token
 
-module.exports = {
-  kinit
-  spnego
-}
+
+
+krb5 = ->
+  options = arguments[0]
+  queue = []
+  err = null
+
+  work = ->
+    return unless queue.length
+    [name, args] = queue.shift()
+    switch name
+      when 'kinit'
+        kinit options, (err, ret) ->
+          if typeof args[0] is 'function'
+            args[0](err, ret)
+          if !err
+            work()
+      when 'spnego'
+        spnego options, (err, token) ->
+          if typeof args[0] is 'function'
+            args[0](err, token)
+        work()
+
+  process.nextTick work
+
+  kinit: ->
+    queue.push ['kinit', arguments]
+    return this
+  spnego: ->
+    queue.push ['spnego', arguments]
+    return this
+
+krb5.kinit = kinit
+krb5.spnego = spnego
+
+module.exports = krb5
+
+
+# TODO
+
+
+
+# err undefined et non 0

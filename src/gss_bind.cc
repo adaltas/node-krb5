@@ -32,7 +32,6 @@ class Worker_generate_spnego_token : public Napi::AsyncWorker {
 
     void Execute() {
       const char* server = str_server.c_str();
-      std::cout << "princ : " << server << std::endl;
       gss_ctx_id_t gss_context = GSS_C_NO_CONTEXT;
       gss_buffer_desc input_buf,output_buf;
       gss_name_t target_name;

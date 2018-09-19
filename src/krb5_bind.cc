@@ -267,6 +267,70 @@ Napi::Value _krb5_cc_initialize(const Napi::CallbackInfo& info) {
 }
 
 
+
+
+
+
+/**
+ * krb5_cc_resolve
+ */
+class Worker_krb5_cc_resolve : public Napi::AsyncWorker {
+  public:
+    Worker_krb5_cc_resolve(krb5_context ctx, 
+                           std::string name,
+                           Napi::Function& callback)
+      : Napi::AsyncWorker(callback), krb_context(ctx), 
+                                     cc_name(name) {
+    }
+
+  private:
+    void Execute() {
+      err = krb5_cc_resolve(krb_context, cc_name.c_str(), &ccache);
+    }
+
+    void OnOK() {
+      Napi::HandleScope scope(Env());       
+
+      Callback().Call({
+        Napi::Number::New(Env(), err),
+        Napi::External<struct _krb5_ccache>::New(Env(), ccache)
+      });
+
+    }
+
+    // In parameter
+    krb5_context krb_context;
+    std::string cc_name;
+      
+    // Out parameter
+    krb5_error_code err;
+    krb5_ccache ccache;
+};
+
+Napi::Value _krb5_cc_resolve(const Napi::CallbackInfo& info) {
+  if (info.Length() < 3) {
+    throw Napi::TypeError::New(info.Env(), "3 arguments expected");
+  }
+
+  krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
+  std::string name = info[1].As<Napi::String>().Utf8Value();
+  Napi::Function callback = info[2].As<Napi::Function>();
+
+  Worker_krb5_cc_resolve* worker = new Worker_krb5_cc_resolve(krb_context, 
+                                                                 name,
+                                                                 callback);
+  worker->Queue();
+  return info.Env().Undefined();
+}
+
+
+
+
+
+
+
+
+
 /**
  * krb5_cc_store_cred
  */

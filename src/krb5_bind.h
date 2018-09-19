@@ -14,6 +14,7 @@ Napi::Value _krb5_cc_default(const Napi::CallbackInfo& info);
 Napi::Value _krb5_cc_get_name_sync(const Napi::CallbackInfo& info);
 Napi::Value _krb5_cc_initialize(const Napi::CallbackInfo& info);
 Napi::Value _krb5_cc_initialize_sync(const Napi::CallbackInfo& info);
+Napi::Value _krb5_cc_resolve(const Napi::CallbackInfo& info);
 Napi::Value _krb5_cc_store_cred(const Napi::CallbackInfo& info);
 Napi::Value _krb5_free_context(const Napi::CallbackInfo& info);
 Napi::Value _krb5_free_context_sync(const Napi::CallbackInfo& info);

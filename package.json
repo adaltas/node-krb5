@@ -9,7 +9,17 @@
     "node-addon-api": "latest"
   },
   "gypfile": true,
-  "author": "",
+  "author": "Pierre Sauvage",
+  "contributors": [
+    {
+      "name": "Pierre Sauvage",
+      "email": "pierre@adaltas.com"
+    },
+    {
+      "name": "Xavier Hermand",
+      "email": "xavier@adaltas.com"
+    }
+  ],
   "license": "BSD-3-Clause",
   "keywords": [
     "kerberos",
@@ -18,6 +28,10 @@
     "spnego",
     "authentication"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adaltas/node-krb5"
+  },
   "scripts": {
     "coffee": "./node_modules/.bin/coffee -b -o lib/krb5 src",
     "rebuild": "node-gyp rebuild --debug"

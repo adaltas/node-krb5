@@ -69,43 +69,115 @@ binding.gyp present in the package root folder with the following properties:
 
 # Usage
 
+## Quick example
 
-## kinit and SPNEGO
+* Retrieve a **SPNEGO token** for a service   
 
-You can use `kinit` to retrieve a ticket from the KDC. It is required to call the `spnego` method. 
+In this example we want to retrieve a token to access a REST API of the service HBase, located on the host `m01.krb.local` .
 
 ```js
-var k = require('../lib/krb5');
-
-k.kinit({
-  username: 'name',
+// Get the initial credentials using a keytab
+krb5.kinit({
+  username: 'hbase/m01.krb.local',
+  keytab: '/tmp/hbase.service.keytab',
   realm: 'KRB.LOCAL',
-  keytab: '/etc/security/keytabs/me.keytab'
-  //or password: 'mypass'
-}, function (err, arg) {
-  if (!err) {
-    console.log('Credentials stored in ', arg.cc_path)
+}, function (err, ccname) {
+  if (err) {
+    console.log(err)
+  } else {
+    console.log('Credentials saved in', ccname)
+    // Get the SPNEGO token
+    krb5.spnego({
+      service_fqdn: 'm01.krb.local'
+    }, function (err, token) {
+      if (err) {
+        console.log(err)
+      } else {
+        console.log('SPNEGO token :', token)
+      }
+    })
   }
-
-  k.spnego({
-    service_fqdn: 'm01.krb.local'
-  }, function (err, token) {
-    if (!err) {
-      console.log('SPNEGO token : ', token)
-    }
-  })
-})
-
+});
 ```
 
+**For better readability**, configure a `krb5` instance and chain methods :
+```js
+krb5({
+  username: 'hbase/m01.krb.local',
+  keytab: '/tmp/hbase.service.keytab',
+  realm: 'KRB.LOCAL',
+  service_fqdn: 'm01.krb.local'
+}).kinit(function (err, ccname) {
+  if (err) {
+    console.log(err)
+  } else {
+    console.log('Credentials saved in', ccname)
+  }
+}).spnego(function (err, token) {
+  if (err) {
+    console.log(err)
+  } else {
+    console.log('SPNEGO token :', token)
+  }
+});
+```
+Note that with this syntax, if `kinit` fails (an error code is defined), the rest of the call chain is automatically interupted, hence `spnego` is not called. 
+
+For more example, see the [samples][samples] and [test][test] directories.
+
+## Functions
 
 
+### `kinit(options, callback)` : retrieve initial credentials (*Ticket Granting Ticket*)
 
-For more example, see the [samples directory][samples].
+
+Options :  
+* `username`   
+Kerberos principal.
+
+* `password` / `keytab`   
+One of both should be given for authentication.
+
+* `realm`  
+Kerberos realm (usually capitalize domain name).
+
+* `ccname` (optionnal)  
+Credential cache location. If this is not specified, default path is taken from environment variable `KRB5CCNAME`, then from `/etc/krb5.conf`. Current implementation uses process environment variable and is **not thread safe**. Only use if you want to switch path once for all. 
+
+Callback parameters :
+* `err`  
+Should be `undefined`. Otherwise it contains an error message.  
+
+* `ccname`  
+Credential path location used to store initial credentials. 
+
+___
+### `spnego(options, callback)` : retrieve a SPNEGO token. 
+
+In order to retrieve a SPNEGO token to access a service, you first need an initial ticket (TGT). You can get with `kinit`.
+
+
+Options :
+* `service_fqdn`   
+Fully qualified domain name of the service.
+
+* `ccname` (optionnal)  
+Location of the credential cache storing the initial ticket. If not specified, default path is taken. 
+
+Callback parameters :
+* `err`  
+Should be `undefined`. Otherwise contains GSS API major error code.
+
+* `token`  
+The SPNEGO token to access the service. It can then be added to the header of the HTTP request `Authorization: Negociate {token}`
+
+___
+
+
 
 [MIT Kerberos]: http://web.mit.edu/kerberos/
 [SPNEGO]: http://en.wikipedia.org/wiki/SPNEGO
 [MIT Kerberos Dist]: http://web.mit.edu/kerberos/dist/
 [visual studio]:https://github.com/TooTallNate/node-gyp/wiki/Visual-Studio-2010-Setup
 [samples]: https://github.com/adaltas/node-krb5/tree/master/samples
-
+[test]: https://github.com/adaltas/node-krb5/tree/master/test

@@ -1,7 +1,7 @@
 # Kerberos for Node.js
 
-krb5 is a Node.js native binding for kerberos. It is a node.js implementation of
-kerberos client tools : 
+krb5 is a Node.js native binding for kerberos. It is a Node.js implementation of
+Kerberos client tools : 
 * kinit (keytab, or password) : retrieve initial credentials;
 * spnego : generate a SPNEGO token.
 

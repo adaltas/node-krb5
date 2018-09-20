@@ -1,4 +1,4 @@
-k = require '../../build/Debug/krb5'
+k = require '../build/Release/krb5'
 fs = require 'fs'
 
 
@@ -42,6 +42,7 @@ kinit = (options, callback) ->
         if options.ccname.indexOf(':KEYRING') != -1
           cleanup ctx, princ
           return callback Error 'KEYRING method not supported.'
+        process.env.KRB5CCNAME = options.ccname
         k.krb5_cc_resolve ctx, options.ccname, (err, ccache) ->
           return handle_error(callback, err, ctx, princ, ccache) if err
           creds(ccache)
@@ -77,12 +78,14 @@ kinit = (options, callback) ->
             k.krb5_cc_store_cred ctx, ccache, creds, (err) ->
               return handle_error(callback, err, ctx, princ, ccache) if err
               ccname = k.krb5_cc_get_name_sync ctx, ccache
-              callback undefined, { ccname: ccname }
+              callback undefined, ccname
 
           create_cc if options.password then get_creds_password else get_creds_keytab
           return
 
 spnego = (options, callback) ->
+  if options.ccname
+    process.env.KRB5CCNAME = options.ccname
   service_principal_or_fqdn = null
   service_principal_or_fqdn ?= options.service_principal
   service_principal_or_fqdn ?= options.service_fqdn
@@ -104,9 +107,9 @@ krb5 = ->
     [name, args] = queue.shift()
     switch name
       when 'kinit'
-        kinit options, (err, ret) ->
+        kinit options, (err, ccname) ->
           if typeof args[0] is 'function'
-            args[0](err, ret)
+            args[0](err, ccname)
           if !err
             work()
       when 'spnego'

@@ -1,5 +1,4 @@
-krb5 = require '../lib/krb5'
-
+krb5 = require '../lib/'
 
 describe 'kinit', ->
 
@@ -10,9 +9,9 @@ describe 'kinit', ->
         username: 'admin'
         password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
-      .kinit (err, ret) ->
+      .kinit (err, ccname) ->
         (err is undefined).should.be.true()
-        ret.ccname.should.startWith('/tmp')
+        ccname.should.startWith('/tmp')
         done err
     
     it 'returns default credential cache path (keytab provided)', (done) ->
@@ -20,7 +19,7 @@ describe 'kinit', ->
         username: 'hbase/m01.krb.local'
         keytab: '/tmp/hbase.service.keytab'
         realm: 'KRB.LOCAL'
-      .kinit (err, { ccname }) ->
+      .kinit (err, ccname) ->
         (err is undefined).should.be.true()
         ccname.should.startWith('/tmp')
         done()
@@ -31,11 +30,12 @@ describe 'kinit', ->
         keytab: '/tmp/hbase.service.keytab'
         realm: 'KRB.LOCAL'
         ccname: '/tmp/customcc'
-      .kinit (err, ret) ->
+      .kinit (err, ccname) ->
         (err is undefined).should.be.true()
-        ret.ccname.should.be.equal '/tmp/customcc'
+        ccname.should.be.equal '/tmp/customcc'
         done()
 
+###
   describe 'method with promise', ->
 
     it 'returns default credential cache path (password provided)', (done) ->
@@ -45,9 +45,10 @@ describe 'kinit', ->
         realm: 'KRB.LOCAL'
       .kinit()
       .catch done
-      .then ({ ccname }) ->
+      .then (ccname) ->
         ccname.should.startWith('/tmp')
         done()
+###
 
 describe 'kinit', ->
 
@@ -58,7 +59,7 @@ describe 'kinit', ->
         username: 'admin'
         password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
-      , (err, { ccname }) ->
+      , (err, ccname) ->
         (err is undefined).should.be.true()
         ccname.should.startWith('/tmp')
         done()
@@ -68,11 +69,23 @@ describe 'kinit', ->
         username: 'hbase/m01.krb.local'
         keytab: '/tmp/hbase.service.keytab'
         realm: 'KRB.LOCAL'
-      , (err, { ccname }) ->
+      , (err, ccname) ->
         (err is undefined).should.be.true()
         ccname.should.startWith('/tmp')
         done()
-  
+
+    it 'returns given credential cache path (keytab provided)', (done) ->
+      krb5.kinit
+        username: 'hbase/m01.krb.local'
+        keytab: '/tmp/hbase.service.keytab'
+        realm: 'KRB.LOCAL'
+        ccname: '/tmp/customcc'
+      , (err, ccname) ->
+        (err is undefined).should.be.true()
+        ccname.should.startWith('/tmp')
+        done()
+
+###
   describe 'function with promise', ->
     it 'returns default credential cache path (password provided)', (done) ->
       krb5.kinit
@@ -80,7 +93,8 @@ describe 'kinit', ->
         password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
       .catch done
-      .then ({ ccname }) ->
+      .then (ccname) ->
         ccname.should.startWith('/tmp')
         done()
+###
 

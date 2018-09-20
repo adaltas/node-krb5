@@ -2,7 +2,7 @@
   "name": "krb5",
   "version": "0.3.0",
   "description": "Kerberos library bindings for NodeJs",
-  "main": "./lib",
+  "main": "./lib/index.js",
   "dependencies": {
     "bindings": "latest",
     "mocha": "latest",
@@ -33,7 +33,8 @@
     "url": "https://github.com/adaltas/node-krb5"
   },
   "scripts": {
-    "coffee": "./node_modules/.bin/coffee -b -o lib/krb5 src",
-    "rebuild": "node-gyp rebuild --debug"
+    "coffee": "./node_modules/.bin/coffee -b -o lib src",
+    "rebuild": "node-gyp rebuild",
+    "test": "./node_modules/.bin/mocha test/*.coffee"
   }
 }

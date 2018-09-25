@@ -1,10 +1,8 @@
 var krb5 = require('../lib/');
 
 krb5({
-  principal: 'admin',
+  principal: 'admin@KRB.LOCAL',
   password: 'adm1n_p4ssw0rd',
-  realm: 'KRB.LOCAL',
-  principal: 'user@realm'
 }).kinit(function (err, ccname) {
   if (err) {
     console.log(err)
@@ -17,7 +15,7 @@ krb5.kinit({
   principal: 'admin',
   password: 'adm1n_p4ssw0rd',
   realm: 'KRB.LOCAL',
-  ccname: '/tmp/customcc'     //optionnal
+  ccname: '/tmp/customcc' 
 }, function (err, ccname) {
   if (err) {
     console.log(err)

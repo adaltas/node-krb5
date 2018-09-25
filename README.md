@@ -1,8 +1,8 @@
 # Kerberos for Node.js
 
-krb5 is a Node.js native binding for Kerberos. It is a Node.js implementation of Kerberos client tools : 
-* kinit (keytab, or password) : retrieve initial credentials;
-* spnego : generate a SPNEGO token.
+krb5 is a Node.js native binding for Kerberos. It is a Node.js implementation of Kerberos client tools: 
+* kinit (keytab, or password): retrieve initial credentials;
+* spnego: generate a SPNEGO token.
 
 It uses the [MIT Kerberos] native library.  
 [SPNEGO] is a GSS mechanism to authenticate through HTML requests.
@@ -11,7 +11,7 @@ It uses the [MIT Kerberos] native library.
 
 To have this module working properly, you should get MIT Kerberos. We recommand avoiding your distribution package as it may not be the MIT version, and future versions of this module may include some MIT Kerberos extensions. 
 
-Compiling from the source of MIT Kerberos requires `python2`, `make`, `gcc` (`g++`), `bison` and `byacc`. Clone this repository and then run :
+Compiling from the source of MIT Kerberos requires `python2`, `make`, `gcc` (`g++`), `bison` and `byacc`. Clone this repository and then run:
 ```bash
 # To download, compile and install MIT Kerberos 
 npm run krb5-lib 
@@ -21,7 +21,7 @@ npm install
 
 If MIT Kerberos is already installed on your system, just run `npm install krb5`.
 
-If you want to install MIT Kerberos in another directory (default is "/usr/local"), specify a `--prefix` option to `./configure` in the file `install_krb5.sh` before runing `npm run krb5-lib`. 
+If you want to install MIT Kerberos in another directory (default is "/usr/local"), specify a `--prefix` option to `./configure` in the file `install_krb5.sh` before running `npm run krb5-lib`. 
 
 If kerberos is installed in a directory not included in include and/or library path (if you have manually compiled kerberos in a specific directory for example), please modify the binding.gyp present in the package root folder with the following properties:
 
@@ -78,7 +78,7 @@ krb5.kinit({
 });
 ```
 
-**For better readability**, configure a `krb5` instance and chain methods :
+**For better readability**, configure a `krb5` instance and chain methods:
 ```js
 krb5({
   username: 'hbase/m01.krb.local',
@@ -99,7 +99,7 @@ krb5({
   }
 });
 ```
-Note that with this syntax, if `kinit` fails (an error code is defined), the rest of the call chain is automatically interupted, hence `spnego` is not called. 
+Note that with this syntax, if `kinit` fails (an error code is defined), the rest of the call chain is automatically interrupted, hence `spnego` is not called. 
 
 For more example, see the [samples][samples] and [test][test] directories.
 
@@ -109,7 +109,7 @@ For more example, see the [samples][samples] and [test][test] directories.
 ### `kinit(options, callback)` : retrieve initial credentials (*Ticket Granting Ticket*)
 
 
-Options :  
+Options:  
 * `username`   
 Kerberos principal.
 
@@ -122,7 +122,7 @@ Kerberos realm (usually capitalized domain name).
 * `ccname` (optionnal)  
 Credential cache location. If this is not specified, default path is taken from environment variable `KRB5CCNAME`, then from `/etc/krb5.conf`. Current implementation uses process environment variable and is **not thread safe**. Only use if you want to switch path once for all. 
 
-Callback parameters :
+Callback parameters:
 * `err`  
 Should be `undefined`. Otherwise it contains an error message.  
 
@@ -131,17 +131,17 @@ Credential path location used to store initial credentials.
 
 ### `spnego(options, callback)` : retrieve a SPNEGO token. 
 
-In order to retrieve a SPNEGO token to access a service, you first need an initial ticket (TGT). You can get with `kinit`.
+In order to retrieve a SPNEGO token to access a service, you first need an initial ticket (TGT) which you can get with `kinit`.
 
 
-Options :
+Options:
 * `service_fqdn`   
 Fully qualified domain name of the service.
 
 * `ccname` (optionnal)  
 Location of the credential cache storing the initial ticket. If not specified, default path is taken. 
 
-Callback parameters :
+Callback parameters:
 * `err`  
 Should be `undefined`. Otherwise contains GSS API major error code.
 

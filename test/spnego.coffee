@@ -6,7 +6,7 @@ describe 'spnego', ->
 
     it 'returns SPNEGO token', (done) ->
       krb5
-        username: 'hbase/m01.krb.local'
+        principal: 'hbase/m01.krb.local'
         keytab: '/tmp/hbase.service.keytab'
         realm: 'KRB.LOCAL'
         service_fqdn: 'm01.krb.local'
@@ -22,7 +22,7 @@ describe 'spnego', ->
 
     it 'returns SPNEGO token', (done) ->
       krb5.kinit
-        username: 'hbase/m01.krb.local'
+        principal: 'hbase/m01.krb.local'
         keytab: 'FILE:/tmp/hbase.service.keytab'
         realm: 'KRB.LOCAL'
       , (err, ccnmae) ->
@@ -38,7 +38,7 @@ describe 'spnego', ->
     
     it 'returns SPNEGO token', (done) ->
       krb5.kinit
-        username: 'hbase/m01.krb.local'
+        principal: 'hbase/m01.krb.local'
         keytab: 'FILE:/tmp/hbase.service.keytab'
         realm: 'KRB.LOCAL'
       .catch done

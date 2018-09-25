@@ -22,66 +22,79 @@ handle_error = (callback, err, ctx, princ, ccache) ->
 
 
 kinit = (options, callback) ->
-  if !options.username or !options.realm
-    return callback Error 'Please specify user and realm for kinit'
+  if !options.principal
+    return callback Error 'Please specify principal for kinit'
     
   if !options.password and !options.keytab
     return callback Error 'Please specify password or keytab for kinit'
 
+  if !options.principal.indexOf('@') != -1
+    split = options.principal.split('@')
+    options.principal = split[0]
+    options.realm = split[1]
+
   k.krb5_init_context (err, ctx) ->
     return handle_error(callback, err, ctx) if err
 
-    k.krb5_build_principal ctx,
-    options.realm.length,
-    options.realm,
-    options.username,
-    (err, princ) ->
-      return handle_error(callback, err, ctx, princ) if err
+    realm_is_set = () ->
+      k.krb5_build_principal ctx,
+      options.realm.length,
+      options.realm,
+      options.principal,
+      (err, princ) ->
+        return handle_error(callback, err, ctx, princ) if err
 
-      if options.ccname
-        if options.ccname.indexOf(':KEYRING') != -1
-          cleanup ctx, princ
-          return callback Error 'KEYRING method not supported.'
-        process.env.KRB5CCNAME = options.ccname
-        k.krb5_cc_resolve ctx, options.ccname, (err, ccache) ->
-          return handle_error(callback, err, ctx, princ, ccache) if err
-          creds(ccache)
-      else
-        k.krb5_cc_default ctx, (err, ccache) ->
-          return handle_error(callback, err, ctx, princ, ccache) if err
-          creds(ccache)
+        if options.ccname
+          if options.ccname.indexOf(':KEYRING') != -1
+            cleanup ctx, princ
+            return callback Error 'KEYRING method not supported.'
+          process.env.KRB5CCNAME = options.ccname
+          k.krb5_cc_resolve ctx, options.ccname, (err, ccache) ->
+            return handle_error(callback, err, ctx, princ, ccache) if err
+            creds(ccache)
+        else
+          k.krb5_cc_default ctx, (err, ccache) ->
+            return handle_error(callback, err, ctx, princ, ccache) if err
+            creds(ccache)
 
-      creds = (ccache) ->
-        ccname = k.krb5_cc_get_name_sync ctx, ccache
-        fs.exists ccname, (exists) ->
-          create_cc = (create_cc_callback) ->
-            if !exists
-              k.krb5_cc_initialize ctx, ccache, princ, (err) ->
-                return handle_error(callback, err, ctx, princ, ccache) if err
+        creds = (ccache) ->
+          ccname = k.krb5_cc_get_name_sync ctx, ccache
+          fs.exists ccname, (exists) ->
+            create_cc = (create_cc_callback) ->
+              if !exists
+                k.krb5_cc_initialize ctx, ccache, princ, (err) ->
+                  return handle_error(callback, err, ctx, princ, ccache) if err
+                  create_cc_callback()
+              else
                 create_cc_callback()
-            else
-              create_cc_callback()
 
-          get_creds_password = () ->
-            k.krb5_get_init_creds_password ctx, princ, options.password, (err, creds) ->
-              return handle_error(callback, err, ctx, princ, ccache) if err
-              store_creds creds
-
-          get_creds_keytab = () ->
-            k.krb5_kt_resolve ctx, options.keytab, (err, kt) ->
-              return handle_error(callback, err, ctx, princ, ccache) if err
-              k.krb5_get_init_creds_keytab ctx, princ, kt, 0, (err, creds) ->
+            get_creds_password = () ->
+              k.krb5_get_init_creds_password ctx, princ, options.password, (err, creds) ->
                 return handle_error(callback, err, ctx, princ, ccache) if err
                 store_creds creds
-                  
-          store_creds = (creds) ->
-            k.krb5_cc_store_cred ctx, ccache, creds, (err) ->
-              return handle_error(callback, err, ctx, princ, ccache) if err
-              ccname = k.krb5_cc_get_name_sync ctx, ccache
-              callback undefined, ccname
 
-          create_cc if options.password then get_creds_password else get_creds_keytab
-          return
+            get_creds_keytab = () ->
+              k.krb5_kt_resolve ctx, options.keytab, (err, kt) ->
+                return handle_error(callback, err, ctx, princ, ccache) if err
+                k.krb5_get_init_creds_keytab ctx, princ, kt, 0, (err, creds) ->
+                  return handle_error(callback, err, ctx, princ, ccache) if err
+                  store_creds creds
+                    
+            store_creds = (creds) ->
+              k.krb5_cc_store_cred ctx, ccache, creds, (err) ->
+                return handle_error(callback, err, ctx, princ, ccache) if err
+                ccname = k.krb5_cc_get_name_sync ctx, ccache
+                callback undefined, ccname
+
+            create_cc if options.password then get_creds_password else get_creds_keytab
+            return
+
+    if !options.realm
+      k.krb5_get_default_realm ctx, (err, realm) ->
+        options.realm = realm
+        realm_is_set()
+    else
+      realm_is_set()
 
 spnego = (options, callback) ->
   if options.ccname

@@ -6,17 +6,36 @@ describe 'kinit', ->
 
     it 'returns default credential cache path (password provided)', (done) ->
       krb5
-        username: 'admin'
+        principal: 'admin'
         password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
       .kinit (err, ccname) ->
         (err is undefined).should.be.true()
         ccname.should.startWith('/tmp')
         done err
-    
+
+    it 'returns default credential cache path (password provided using default realm)', (done) ->
+      krb5
+        principal: 'admin'
+        password: 'adm1n_p4ssw0rd'
+      .kinit (err, ccname) ->
+        (err is undefined).should.be.true()
+        ccname.should.startWith('/tmp')
+        done err
+ 
+    it 'returns default credential cache path (password provided using realm in principal)', (done) ->
+      krb5
+        principal: 'admin@KRB.LOCAL'
+        password: 'adm1n_p4ssw0rd'
+        realm: 'to_override'
+      .kinit (err, ccname) ->
+        (err is undefined).should.be.true()
+        ccname.should.startWith('/tmp')
+        done err
+
     it 'returns default credential cache path (keytab provided)', (done) ->
       krb5
-        username: 'hbase/m01.krb.local'
+        principal: 'hbase/m01.krb.local'
         keytab: '/tmp/hbase.service.keytab'
         realm: 'KRB.LOCAL'
       .kinit (err, ccname) ->
@@ -26,7 +45,7 @@ describe 'kinit', ->
 
     it 'returns given credential cache path (keytab provided)', (done) ->
       krb5
-        username: 'hbase/m01.krb.local'
+        principal: 'hbase/m01.krb.local'
         keytab: '/tmp/hbase.service.keytab'
         realm: 'KRB.LOCAL'
         ccname: '/tmp/customcc'
@@ -40,7 +59,7 @@ describe 'kinit', ->
 
     it 'returns default credential cache path (password provided)', (done) ->
       krb5
-        username: 'admin'
+        principal: 'admin'
         password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
       .kinit()
@@ -56,7 +75,7 @@ describe 'kinit', ->
 
     it 'returns default credential cache path (password provided)', (done) ->
       krb5.kinit
-        username: 'admin'
+        principal: 'admin'
         password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
       , (err, ccname) ->
@@ -66,7 +85,7 @@ describe 'kinit', ->
 
     it 'returns default credential cache path (keytab provided)', (done) ->
       krb5.kinit
-        username: 'hbase/m01.krb.local'
+        principal: 'hbase/m01.krb.local'
         keytab: '/tmp/hbase.service.keytab'
         realm: 'KRB.LOCAL'
       , (err, ccname) ->
@@ -76,7 +95,7 @@ describe 'kinit', ->
 
     it 'returns given credential cache path (keytab provided)', (done) ->
       krb5.kinit
-        username: 'hbase/m01.krb.local'
+        principal: 'hbase/m01.krb.local'
         keytab: '/tmp/hbase.service.keytab'
         realm: 'KRB.LOCAL'
         ccname: '/tmp/customcc'
@@ -89,7 +108,7 @@ describe 'kinit', ->
   describe 'function with promise', ->
     it 'returns default credential cache path (password provided)', (done) ->
       krb5.kinit
-        username: 'admin'
+        principal: 'admin'
         password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
       .catch done

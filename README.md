@@ -56,7 +56,7 @@ In this example we want to retrieve a token to access a REST API of the service 
 ```js
 // Get the initial credentials using a keytab
 krb5.kinit({
-  username: 'hbase/m01.krb.local',
+  principal: 'hbase/m01.krb.local',
   keytab: '/tmp/hbase.service.keytab',
   realm: 'KRB.LOCAL',
 }, function (err, ccname) {
@@ -81,7 +81,7 @@ krb5.kinit({
 **For better readability**, configure a `krb5` instance and chain methods:
 ```js
 krb5({
-  username: 'hbase/m01.krb.local',
+  principal: 'hbase/m01.krb.local',
   keytab: '/tmp/hbase.service.keytab',
   realm: 'KRB.LOCAL',
   service_fqdn: 'm01.krb.local'
@@ -110,14 +110,14 @@ For more example, see the [samples][samples] and [test][test] directories.
 
 
 Options:  
-* `username`   
-Kerberos principal.
+* `principal`   
+Kerberos principal *username@REALM* or *username*. If realm is given, overrides the realm option.
 
 * `password` / `keytab`   
 One of both should be given for authentication.
 
-* `realm`  
-Kerberos realm (usually capitalized domain name).
+* `realm` (optionnal)  
+Kerberos realm (usually capitalized domain name). If this is not specified, use the default realm from `/etc/krb5.conf`.
 
 * `ccname` (optionnal)  
 Credential cache location. If this is not specified, default path is taken from environment variable `KRB5CCNAME`, then from `/etc/krb5.conf`. Current implementation uses process environment variable and is **not thread safe**. Only use if you want to switch path once for all. 

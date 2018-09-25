@@ -5,7 +5,7 @@
 var krb5 = require('../lib/');
 
 krb5({
-  username: 'hbase/m01.krb.local',
+  principal: 'hbase/m01.krb.local',
   keytab: '/tmp/hbase.service.keytab',
   realm: 'KRB.LOCAL',
   service_fqdn: 'm01.krb.local'
@@ -26,7 +26,7 @@ krb5({
 // Using static functions
 
 krb5.kinit({
-  username: 'admin',
+  principal: 'admin',
   password: 'adm1n_p4ssw0rd',
   realm: 'KRB.LOCAL'
 }, function (err, ccname) {

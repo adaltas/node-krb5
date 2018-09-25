@@ -1,7 +1,7 @@
 {
   "name": "krb5",
   "version": "0.3.0",
-  "description": "Kerberos library bindings for NodeJs",
+  "description": "Kerberos library bindings for Node.js",
   "main": "./lib/index.js",
   "dependencies": {
     "bindings": "latest",
@@ -41,6 +41,6 @@
     "rebuild": "node-gyp rebuild",
     "test": "mocha test/*.coffee",
     "install": "node-gyp rebuild",
-    "krb5-lib": "sudo ./preinstall.sh"
+    "krb5-lib": "./install_krb5.sh"
   }
 }

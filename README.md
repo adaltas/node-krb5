@@ -1,7 +1,6 @@
 # Kerberos for Node.js
 
-krb5 is a Node.js native binding for kerberos. It is a Node.js implementation of
-Kerberos client tools : 
+krb5 is a Node.js native binding for Kerberos. It is a Node.js implementation of Kerberos client tools : 
 * kinit (keytab, or password) : retrieve initial credentials;
 * spnego : generate a SPNEGO token.
 
@@ -10,61 +9,41 @@ It uses the [MIT Kerberos] native library.
 
 ## Installation
 
-The installation assumes that you have mit-kerberos installed on your computer. 
-On Linux, you shall be all set. On Windows or Mac OS, please read the
-corresponding section below. Once mit-kerberos is installed, run
+To have this module working properly, you should get MIT Kerberos. We recommand avoiding your distribution package as it may not be the MIT version, and future versions of this module may include some MIT Kerberos extensions. 
 
+Compiling from the source of MIT Kerberos requires `python2`, `make`, `gcc` (`g++`), `bison` and `byacc`. Clone this repository and then run :
 ```bash
+# To download, compile and install MIT Kerberos 
+npm run krb5-lib 
+# To compile and install the module
 npm install
 ```
 
-## Windows
+If MIT Kerberos is already installed on your system, just run `npm install krb5`.
 
-To compile this library in windows, you need a complete visual studio compile
-chain, please refer to this [webpage][visual studio]. If you have a 32 bit OS,
-please delete binding.gyp and rename \_binding32.gyp before install.
+If you want to install MIT Kerberos in another directory (default is "/usr/local"), specify a `--prefix` option to `./configure` in the file `install_krb5.sh` before runing `npm run krb5-lib`. 
 
-## Mac OS X
-
-If you encounter troubles with your kerberos version, please compile kerberos
-using the following instructions.
-
-Your include path must contain:
-krb5.h
-*   *gssapi.h*
-*   *gssapi/gssapi_krb5.h*
-
-Your library path must contain:
-*   *krb5* library
-*   *gssapi_krb5* library
-
-Here's some instructions on how to install the Kerberos and GSS libraries. You
-can download the latest version of the [MIT Kerberos Distribution][MIT Kerberos Dist].
-Unless you specify the "--prefix" option to `configure`, the library will be
-installed inside "/usr/local".
-
-```bash
-wget http://web.mit.edu/kerberos/dist/krb5/1.15/krb5-1.15-beta1.tar.gz 
-tar -xzf krb5-1.15-beta1.tar.gz 
-cd krb5-1.15-beta1/src
-./configure
-make
-sudo make install
-```
-
-If kerberos is not installed in a directory not included in include and/or library path (if you have manually
-compiled kerberos in a specific directory for example), please modify the
-binding.gyp present in the package root folder with the following properties:
+If kerberos is installed in a directory not included in include and/or library path (if you have manually compiled kerberos in a specific directory for example), please modify the binding.gyp present in the package root folder with the following properties:
 
 ```js
 {
   'targets': [{
     'target_name': 'krb5',
-    'include_dirs': ['/path/to/kerberos/include/dir/','/path/to/kerberos_gssapi/include/dir/'],
-    'libraries': ['/path/to/libkrb5', '/path/to/libgssapi_krb5']
+    'include_dirs': [
+      '/path/to/kerberos/include/dir/',
+      '/path/to/kerberos_gssapi/include/dir/'],
+    'libraries': [
+      '/path/to/libkrb5', 
+      '/path/to/libgssapi_krb5']
   }]
 }
 ```
+
+
+## Windows
+
+To compile this library in windows, you need a complete visual studio compile chain, please refer to this [webpage][visual studio]. If you have a 32 bit OS, please delete `binding.gyp` and rename `_binding32.gyp` before install.
+
 
 # Usage
 

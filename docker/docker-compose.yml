@@ -1,0 +1,26 @@
+version: '3'
+services:
+  kerberos:
+    build: ./kdc
+    image: krb5_kdc
+    volumes:
+      - /dev/urandom:/dev/random
+      - /tmp/krb5_test:/tmp/krb5_test
+    hostname: kdc.krb.local
+    environment:
+      BOOTSTRAP: 1
+  archlinux:
+    build: ./archlinux
+    image: krb5_archlinux
+    depends_on:
+      - kerberos
+    links:
+      - "kerberos:kdc.krb.local"
+    volumes:
+      - ../src:/node-krb5/src
+      - ../lib:/node-krb5/lib
+      - ../test:/node-krb5/test
+      - ../package.json:/node-krb5/package.json
+      - ../binding.gyp:/node-krb5/binding.gyp
+      - ../install_krb5.sh:/node-krb5/install_krb5.sh
+      - /tmp/krb5_test:/tmp/krb5_test

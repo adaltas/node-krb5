@@ -10,6 +10,7 @@ describe 'kinit', ->
         password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
       .kinit (err, ccname) ->
+        console.log err
         (err is undefined).should.be.true()
         ccname.should.startWith('/tmp')
         done err
@@ -35,18 +36,19 @@ describe 'kinit', ->
 
     it 'returns default credential cache path (keytab provided)', (done) ->
       krb5
-        principal: 'hbase/m01.krb.local'
-        keytab: '/tmp/hbase.service.keytab'
+        principal: 'hbase/hbase.krb.local'
+        keytab: '/tmp/krb5_test/hbase.service.keytab'
         realm: 'KRB.LOCAL'
       .kinit (err, ccname) ->
+        console.log err
         (err is undefined).should.be.true()
         ccname.should.startWith('/tmp')
         done()
 
     it 'returns given credential cache path (keytab provided)', (done) ->
       krb5
-        principal: 'hbase/m01.krb.local'
-        keytab: '/tmp/hbase.service.keytab'
+        principal: 'hbase/hbase.krb.local'
+        keytab: '/tmp/krb5_test/hbase.service.keytab'
         realm: 'KRB.LOCAL'
         ccname: '/tmp/customcc'
       .kinit (err, ccname) ->
@@ -85,8 +87,8 @@ describe 'kinit', ->
 
     it 'returns default credential cache path (keytab provided)', (done) ->
       krb5.kinit
-        principal: 'hbase/m01.krb.local'
-        keytab: '/tmp/hbase.service.keytab'
+        principal: 'hbase/hbase.krb.local'
+        keytab: '/tmp/krb5_test/hbase.service.keytab'
         realm: 'KRB.LOCAL'
       , (err, ccname) ->
         (err is undefined).should.be.true()
@@ -95,8 +97,8 @@ describe 'kinit', ->
 
     it 'returns given credential cache path (keytab provided)', (done) ->
       krb5.kinit
-        principal: 'hbase/m01.krb.local'
-        keytab: '/tmp/hbase.service.keytab'
+        principal: 'hbase/hbase.krb.local'
+        keytab: '/tmp/krb5_test/hbase.service.keytab'
         realm: 'KRB.LOCAL'
         ccname: '/tmp/customcc'
       , (err, ccname) ->

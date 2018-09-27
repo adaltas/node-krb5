@@ -39,7 +39,7 @@
   "scripts": {
     "coffee": "coffee -b -o lib src",
     "rebuild": "node-gyp rebuild",
-    "test": "mocha test/*.coffee",
+    "test": "mocha test/kinit.coffee",
     "install": "node-gyp rebuild",
     "krb5-lib": "./install_krb5.sh"
   }

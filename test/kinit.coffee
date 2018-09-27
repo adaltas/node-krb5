@@ -7,7 +7,7 @@ describe 'kinit', ->
     it 'returns default credential cache path (password provided)', (done) ->
       krb5
         principal: 'admin'
-        password: 'adm1n_p4sswdzad0rd'
+        password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
       .kinit (err, ccname) ->
         (err is undefined).should.be.true()

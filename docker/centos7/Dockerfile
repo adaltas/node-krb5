@@ -15,7 +15,7 @@ RUN yum install -y epel-release
 RUN yum install -y wget git vim sudo
 
 # Install compilation tools
-RUN yum install -y python2 gcc bison make
+RUN yum install -y python2 gcc-c++ bison make
 
 RUN mkdir -p /node-krb5
 ADD ./run.sh /run.sh

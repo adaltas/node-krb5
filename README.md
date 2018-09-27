@@ -1,3 +1,5 @@
+[![Build Status](https://secure.travis-ci.org/adaltas/node-krb5.svg)](http://travis-ci.org/adaltas/node-krb5)
+
 # Kerberos for Node.js
 
 krb5 is a Node.js native binding for Kerberos. It is a Node.js implementation of Kerberos client tools: 

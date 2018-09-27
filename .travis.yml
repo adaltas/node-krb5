@@ -1,11 +1,11 @@
 sudo: required
 
-language: node_js
 services:
   - docker
 
 env:
   - OS_ENV=archlinux
+  - OS_ENV=centos7
 
 script: 
   - cd docker && ./run_tests.sh $OS_ENV

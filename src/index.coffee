@@ -33,69 +33,71 @@ kinit = (options, callback) ->
     options.principal = split[0]
     options.realm = split[1]
 
-  k.krb5_init_context (err, ctx) ->
-    return handle_error(callback, err, ctx) if err
+  do_init = ->
+    k.krb5_init_context (err, ctx) ->
+      return handle_error callback, err if err
+      do_realm ctx
 
-    realm_is_set = () ->
-      k.krb5_build_principal ctx,
-      options.realm.length,
-      options.realm,
-      options.principal,
-      (err, princ) ->
-        return handle_error(callback, err, ctx, princ) if err
-
-        if options.ccname
-          if options.ccname.indexOf(':KEYRING') != -1
-            cleanup ctx, princ
-            return callback Error 'KEYRING method not supported.'
-          process.env.KRB5CCNAME = options.ccname
-          k.krb5_cc_resolve ctx, options.ccname, (err, ccache) ->
-            return handle_error(callback, err, ctx, princ, ccache) if err
-            creds(ccache)
-        else
-          k.krb5_cc_default ctx, (err, ccache) ->
-            return handle_error(callback, err, ctx, princ, ccache) if err
-            creds(ccache)
-
-        creds = (ccache) ->
-          ccname = k.krb5_cc_get_name_sync ctx, ccache
-          fs.exists ccname, (exists) ->
-            create_cc = (create_cc_callback) ->
-              if !exists
-                k.krb5_cc_initialize ctx, ccache, princ, (err) ->
-                  return handle_error(callback, err, ctx, princ, ccache) if err
-                  create_cc_callback()
-              else
-                create_cc_callback()
-
-            get_creds_password = () ->
-              k.krb5_get_init_creds_password ctx, princ, options.password, (err, creds) ->
-                return handle_error(callback, err, ctx, princ, ccache) if err
-                store_creds creds
-
-            get_creds_keytab = () ->
-              k.krb5_kt_resolve ctx, options.keytab, (err, kt) ->
-                return handle_error(callback, err, ctx, princ, ccache) if err
-                k.krb5_get_init_creds_keytab ctx, princ, kt, 0, (err, creds) ->
-                  return handle_error(callback, err, ctx, princ, ccache) if err
-                  store_creds creds
-                    
-            store_creds = (creds) ->
-              k.krb5_cc_store_cred ctx, ccache, creds, (err) ->
-                return handle_error(callback, err, ctx, princ, ccache) if err
-                ccname = k.krb5_cc_get_name_sync ctx, ccache
-                callback undefined, ccname
-
-            create_cc if options.password then get_creds_password else get_creds_keytab
-            return
-
+  do_realm = (ctx) ->
     if !options.realm
       k.krb5_get_default_realm ctx, (err, realm) ->
-        return handle_error(callback, err, ctx) if err
+        return handle_error callback, err, ctx if err
         options.realm = realm
-        realm_is_set()
+        do_principal ctx
     else
-      realm_is_set()
+      do_principal ctx
+
+  do_principal = (ctx) ->
+    k.krb5_build_principal ctx,
+    options.realm.length,
+    options.realm,
+    options.principal,
+    (err, princ) ->
+      return handle_error callback, err, ctx if err
+      do_ccache ctx, princ
+
+  do_ccache = (ctx, princ) ->
+    if options.ccname
+      if options.ccname.indexOf(':KEYRING') != -1
+        cleanup ctx, princ
+        return callback Error 'KEYRING method not supported.'
+      process.env.KRB5CCNAME = options.ccname
+      k.krb5_cc_resolve ctx, options.ccname, (err, ccache) ->
+        return handle_error callback, err, ctx, princ if err
+        do_creds ctx, princ, ccache
+    else
+      k.krb5_cc_default ctx, (err, ccache) ->
+        return handle_error callback, err, ctx, princ if err
+        do_creds ctx, princ, ccache
+
+  do_creds = (ctx, princ, ccache) ->
+    ccname = k.krb5_cc_get_name_sync ctx, ccache
+    fs.exists ccname, (exists) ->
+      if !exists
+        k.krb5_cc_initialize ctx, ccache, princ, (err) ->
+          return handle_error callback, err, ctx, princ if err
+          if options.password then get_creds_password() else get_creds_keytab()
+      else
+        if options.password then get_creds_password() else get_creds_keytab()
+      
+    get_creds_password = ->
+      k.krb5_get_init_creds_password ctx, princ, options.password, (err, creds) ->
+        return handle_error callback, err, ctx, princ, ccache if err
+        store_creds creds
+
+    get_creds_keytab = ->
+      k.krb5_kt_resolve ctx, options.keytab, (err, kt) ->
+        return handle_error callback, err, ctx, princ, ccache if err
+        k.krb5_get_init_creds_keytab ctx, princ, kt, 0, (err, creds) ->
+          return handle_error callback, err, ctx, princ, ccache if err
+          store_creds creds
+            
+    store_creds = (creds) ->
+      k.krb5_cc_store_cred ctx, ccache, creds, (err) ->
+        return handle_error callback, err, ctx, princ, ccache if err
+        callback undefined, ccname
+  
+  do_init()
 
 
 kdestroy = (options, callback) ->
@@ -119,7 +121,6 @@ kdestroy = (options, callback) ->
       callback undefined
 
 
-
 spnego = (options, callback) ->
   if options.ccname
     process.env.KRB5CCNAME = options.ccname
@@ -131,7 +132,6 @@ spnego = (options, callback) ->
 
   k.generate_spnego_token service_principal_or_fqdn, (gss_err, gss_minor, token) ->
     return callback (if gss_err is 0 then undefined else gss_err), token
-
 
 
 krb5 = ->
@@ -182,10 +182,3 @@ krb5.kdestroy = (options, callback) ->
     kdestroy options, callback
 
 module.exports = krb5
-
-
-# TODO
-
-
-
-# err undefined et non 0

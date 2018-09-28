@@ -28,7 +28,7 @@ kinit = (options, callback) ->
   if !options.password and !options.keytab
     return callback Error 'Please specify password or keytab for kinit'
 
-  if !options.principal.indexOf('@') != -1
+  if options.principal.indexOf('@') != -1
     split = options.principal.split('@')
     options.principal = split[0]
     options.realm = split[1]
@@ -91,6 +91,7 @@ kinit = (options, callback) ->
 
     if !options.realm
       k.krb5_get_default_realm ctx, (err, realm) ->
+        return handle_error(callback, err, ctx) if err
         options.realm = realm
         realm_is_set()
     else

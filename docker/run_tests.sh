@@ -1,5 +1,6 @@
 #!/bin/bash -eu
 
+set +e
 if [ "$#" -eq 0 ];then
 	echo "No environment set"
   exit 1

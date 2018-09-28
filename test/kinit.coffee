@@ -39,7 +39,6 @@ describe 'kinit', ->
         keytab: '/tmp/krb5_test/hbase.service.keytab'
         realm: 'KRB.LOCAL'
       .kinit (err, ccname) ->
-        console.log err
         (err is undefined).should.be.true()
         ccname.should.startWith('/tmp')
         done()
@@ -69,9 +68,6 @@ describe 'kinit', ->
         ccname.should.startWith('/tmp')
         done()
 ###
-
-describe 'kinit', ->
-
   describe 'function with callback', ->
 
     it 'returns default credential cache path (password provided)', (done) ->

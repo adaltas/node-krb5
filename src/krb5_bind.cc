@@ -523,7 +523,7 @@ class Worker_krb5_get_default_realm : public Napi::AsyncWorker {
 
       Callback().Call({
         Napi::Number::New(Env(), err),
-        Napi::String::New(Env(), realm)
+        Napi::String::New(Env(), realm ? realm : "")
       });
     }
 

@@ -3,8 +3,9 @@
 # Kerberos for Node.js
 
 krb5 is a Node.js native binding for Kerberos. It is a Node.js implementation of Kerberos client tools: 
-* kinit (keytab, or password): retrieve initial credentials;
-* spnego: generate a SPNEGO token.
+* **kinit** (keytab, or password): retrieve initial credentials;
+* **kdestroy**: destroy a credential cache;
+* **spnego**: generate a SPNEGO token.
 
 It uses the [MIT Kerberos] native library.  
 [SPNEGO] is a GSS mechanism to authenticate through HTML requests.
@@ -149,6 +150,17 @@ Should be `undefined`. Otherwise contains GSS API major error code.
 
 * `token`  
 The SPNEGO token to access the service. It can then be added to the header of the HTTP request `Authorization: Negociate {token}`
+
+
+### `kdestroy (options, callback)` : retrieve initial credentials (*Ticket Granting Ticket*)
+
+Options:  
+* `ccname` (optionnal)  
+Credential cache location. If this is not specified, default path is taken from environment variable `KRB5CCNAME`, then from `/etc/krb5.conf`. 
+
+Callback parameters:
+* `err`  
+Should be `undefined`. Otherwise it contains an error message.  
 
 ___
 

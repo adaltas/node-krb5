@@ -96,6 +96,29 @@ kinit = (options, callback) ->
     else
       realm_is_set()
 
+
+kdestroy = (options, callback) ->
+  k.krb5_init_context (err, ctx) ->
+    return handle_error(callback, err, ctx) if err
+    do_ccache(ctx)
+
+  do_ccache = (ctx) ->
+    if options.ccname
+      k.krb5_cc_resolve ctx, options.ccname, (err, ccache) ->
+        return handle_error(callback, err, ctx, null, ccache) if err
+        do_destroy ctx, ccache
+    else
+      k.krb5_cc_default ctx, (err, ccache) ->
+        return handle_error(callback, err, ctx, null, ccache) if err
+        do_destroy ctx, ccache
+
+  do_destroy = (ctx, ccache) ->
+    k.krb5_cc_destroy ctx, ccache, (err) ->
+      return handle_error(callback, err, ctx) if err
+      callback undefined
+
+
+
 spnego = (options, callback) ->
   if options.ccname
     process.env.KRB5CCNAME = options.ccname
@@ -125,23 +148,37 @@ krb5 = ->
             args[0](err, ccname)
           if !err
             work()
+      when 'kdestroy'
+        kdestroy options, (err) ->
+          if typeof args[0] is 'function'
+            args[0](err)
+          work()
       when 'spnego'
         spnego options, (err, token) ->
           if typeof args[0] is 'function'
             args[0](err, token)
-        work()
+          work()
 
   process.nextTick work
 
   kinit: ->
     queue.push ['kinit', arguments]
     return this
+  kdestroy: ->
+    queue.push ['kdestroy', arguments]
+    return this
   spnego: ->
     queue.push ['spnego', arguments]
     return this
 
-krb5.kinit = kinit
+
 krb5.spnego = spnego
+krb5.kinit = kinit
+krb5.kdestroy = (options, callback) ->
+  if typeof options is 'function'
+    kdestroy {}, options
+  else
+    kdestroy options, callback
 
 module.exports = krb5
 

@@ -178,6 +178,56 @@ Napi::Value _krb5_cc_default(const Napi::CallbackInfo& info) {
 
 
 /**
+ * krb5_cc_destroy
+ */
+class Worker_krb5_cc_destroy : public Napi::AsyncWorker {
+  public:
+    Worker_krb5_cc_destroy(krb5_context ctx, 
+                           krb5_ccache ccache,           
+                           Napi::Function& callback)
+      : Napi::AsyncWorker(callback), krb_context(ctx),
+                                     krb_ccache(ccache) {
+    }
+
+  private:
+    void Execute() {
+      err = krb5_cc_destroy(krb_context, krb_ccache);
+    }
+
+    void OnOK() {
+      Napi::HandleScope scope(Env());       
+
+      Callback().Call({
+        Napi::Number::New(Env(), err)
+      });
+    }
+
+    // In parameters
+    krb5_context krb_context;
+    krb5_ccache krb_ccache;
+    
+    // Out parameters
+    krb5_error_code err;
+};
+
+Napi::Value _krb5_cc_destroy(const Napi::CallbackInfo& info) {
+  if (info.Length() < 3) {
+    throw Napi::TypeError::New(info.Env(), "3 arguments expected");
+  }
+
+  krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
+  krb5_ccache krb_ccache = info[1].As<Napi::External<struct _krb5_ccache>>().Data();
+  Napi::Function callback = info[2].As<Napi::Function>();
+
+  Worker_krb5_cc_destroy* worker = new Worker_krb5_cc_destroy(krb_context,
+                                                              krb_ccache,
+                                                              callback);
+  worker->Queue();
+  return info.Env().Undefined();
+}
+
+
+/**
  * krb5_cc_get_name_sync
  */
 Napi::Value _krb5_cc_get_name_sync(const Napi::CallbackInfo& info) {

@@ -6,6 +6,7 @@ Napi::Object init(Napi::Env env, Napi::Object exports) {
     exports.Set(Napi::String::New(env, "krb5_build_principal"), Napi::Function::New(env, _krb5_build_principal));
     exports.Set(Napi::String::New(env, "krb5_cc_close"), Napi::Function::New(env, _krb5_cc_close));
     exports.Set(Napi::String::New(env, "krb5_cc_default"), Napi::Function::New(env, _krb5_cc_default));
+    exports.Set(Napi::String::New(env, "krb5_cc_destroy"), Napi::Function::New(env, _krb5_cc_destroy));
     exports.Set(Napi::String::New(env, "krb5_cc_get_name_sync"), Napi::Function::New(env, _krb5_cc_get_name_sync));
     exports.Set(Napi::String::New(env, "krb5_cc_initialize"), Napi::Function::New(env, _krb5_cc_initialize));
     exports.Set(Napi::String::New(env, "krb5_cc_initialize_sync"), Napi::Function::New(env, _krb5_cc_initialize_sync));

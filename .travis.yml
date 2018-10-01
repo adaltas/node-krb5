@@ -6,6 +6,7 @@ services:
 env:
   - OS_ENV=archlinux
   - OS_ENV=centos7
+  - OS_ENV=ubuntu
 
 script: 
   - cd docker && ./run_tests.sh $OS_ENV

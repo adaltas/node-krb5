@@ -10,4 +10,4 @@ docker-compose build
 docker-compose run --rm $1 "/run.sh"
 exitcode=$?
 docker-compose down
-echo $exitcode
+exit $exitcode

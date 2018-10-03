@@ -8,7 +8,6 @@
 : ${KERB_ADMIN_USER:=admin}
 : ${KERB_ADMIN_PASS:=adm1n_p4ssw0rd}
 : ${SEARCH_DOMAINS:=krb.local}
-: ${HBASE_FQDN:=hbase.krb.local}
 
 fix_nameserver() {
   cat>/etc/resolv.conf<<EOF
@@ -36,6 +35,7 @@ create_config() {
  ticket_lifetime = 24h
  renew_lifetime = 7d
  forwardable = true
+ rdns = false
 [realms]
  $REALM = {
   kdc = $KDC_ADDRESS
@@ -70,10 +70,14 @@ create_admin_user() {
   echo "admin@$REALM *" > /var/kerberos/krb5kdc/kadm5.acl
 }
 
-create_hbase_user() {
-  kadmin.local -q "addprinc -randkey hbase/$HBASE_FQDN@$REALM"
-  rm -f /tmp/krb5_test/hbase.service.keytab
-  kadmin.local -q "xst -k /tmp/krb5_test/hbase.service.keytab hbase/$HBASE_FQDN@$REALM"
+create_rest_user() {
+  kadmin.local -q "addprinc -randkey rest/rest.krb.local@KRB.LOCAL"
+  rm -f /tmp/krb5_test/rest.service.keytab
+  kadmin.local -q "xst -k /tmp/krb5_test/rest.service.keytab rest/rest.krb.local@KRB.LOCAL"
+
+  kadmin.local -q "addprinc -randkey HTTP/rest.krb.local@KRB.LOCAL"
+  rm -f /tmp/krb5_test/htpp.service.keytab
+  kadmin.local -q "xst -k /tmp/krb5_test/http.service.keytab HTTP/rest.krb.local@KRB.LOCAL"
 }
 
 
@@ -81,16 +85,12 @@ main() {
   fix_nameserver
   fix_hostname
 
-  if [ ! -f /kerberos_initialized ]; then
-    create_config
-    cp /etc/krb5.conf /tmp/krb5_test/
-    create_db
-    create_admin_user
-    create_hbase_user
-    start_kdc
-
-    touch /kerberos_initialized
-  fi
+  create_config
+  cp /etc/krb5.conf /tmp/krb5_test/
+  create_db
+  create_admin_user
+  create_rest_user
+  start_kdc
 
   if [ ! -f /var/kerberos/krb5kdc/principal ]; then
     while true; do sleep 1000; done

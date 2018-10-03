@@ -9,13 +9,31 @@ services:
     hostname: kdc.krb.local
     environment:
       BOOTSTRAP: 1
+  rest:
+    build: ./rest
+    image: krb5_rest
+    hostname: rest.krb.local
+    depends_on:
+      - kerberos
+    links:
+      - "kerberos:kdc.krb.local"
+    volumes:
+      - ../src:/node-krb5/src
+      - ../lib:/node-krb5/lib
+      - ../test:/node-krb5/test
+      - ../package.json:/node-krb5/package.json
+      - ../binding.gyp:/node-krb5/binding.gyp
+      - ../install_krb5.sh:/node-krb5/install_krb5.sh
+      - /tmp/krb5_test:/tmp/krb5_test
   archlinux:
     build: ./archlinux
     image: krb5_archlinux
     depends_on:
       - kerberos
+      - rest
     links:
       - "kerberos:kdc.krb.local"
+      - "rest:rest.krb.local"
     volumes:
       - ../src:/node-krb5/src
       - ../lib:/node-krb5/lib
@@ -29,8 +47,10 @@ services:
     image: krb5_centos7
     depends_on:
       - kerberos
+      - rest
     links:
       - "kerberos:kdc.krb.local"
+      - "rest:rest.krb.local"
     volumes:
       - ../src:/node-krb5/src
       - ../lib:/node-krb5/lib
@@ -44,8 +64,10 @@ services:
     image: krb5_ubuntu
     depends_on:
       - kerberos
+      - rest
     links:
       - "kerberos:kdc.krb.local"
+      - "rest:rest.krb.local"
     volumes:
       - ../src:/node-krb5/src
       - ../lib:/node-krb5/lib

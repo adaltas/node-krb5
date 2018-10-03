@@ -7,6 +7,8 @@ if [ "$#" -eq 0 ];then
 fi
 
 docker-compose build
+docker-compose up -d kerberos
+docker-compose up -d rest
 docker-compose run --rm $1 "/run.sh"
 exitcode=$?
 docker-compose down

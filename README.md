@@ -152,7 +152,7 @@ Should be `undefined`. Otherwise contains GSS API major error code.
 The SPNEGO token to access the service. It can then be added to the header of the HTTP request `Authorization: Negociate {token}`
 
 
-### `kdestroy (options, callback)` : retrieve initial credentials (*Ticket Granting Ticket*)
+### `kdestroy (options, callback)` : destroys credential cache
 
 Options:  
 * `ccname` (optionnal)  

@@ -10,7 +10,7 @@ RUN yum install -y wget git vim sudo make
 RUN yum install -y python2 gcc-c++ make
 
 # Install Kerberos libs
-RUN yum install krb5-devel
+RUN yum install -y krb5-devel
 
 # Install Node.js via n
 ENV NPM_CONFIG_LOGLEVEL info

@@ -2,22 +2,20 @@ var krb5 = require('../lib/');
 
 
 krb5.kinit({
-  principal: 'admin',
+  principal: 'admin@KRB.LOCAL',
   password: 'adm1n_p4ssw0rd',
-  realm: 'KRB.LOCAL'
-}, function (err, ccname) {
+  ccname: '/tmp/customcc'
+}, function (ccname, err) {
   if (err) {
     console.log(err)
   } else {
     console.log('Credentials saved in', ccname)
 
-    krb5.spnego({
-      service_fqdn: 'rest.krb.local'
-    }, function (err, token) {
+    krb5.kdestroy({ ccname: '/tmp/customcc' }, function (err) {
       if (err) {
         console.log(err)
       } else {
-        console.log('SPNEGO token :', token)
+        console.log('Credential cache destroyed.')
       }
     })
   }

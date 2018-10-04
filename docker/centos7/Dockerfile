@@ -4,10 +4,10 @@ FROM centos:7
 RUN yum install -y epel-release
 
 # Install misc
-RUN yum install -y wget git vim sudo
+RUN yum install -y wget git vim sudo make
 
-# Install compilation tools
-RUN yum install -y python2 gcc-c++ bison make
+# Install Kerberos libs
+RUN yum install krb5-devel
 
 # Install Node.js via n
 ENV NPM_CONFIG_LOGLEVEL info

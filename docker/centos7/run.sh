@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[[ "TRACE" ]] && set -x
+[[ "TRACE" ]] 
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -13,7 +13,6 @@ do
 done
 cd /node-krb5
 cp /tmp/krb5_test/krb5.conf /etc/krb5.conf
-npm run krb5-lib
 for node_version in "10.11.0" "8.12.0" "6.14.4"; do
   echo "Node.js version "$node_version
   n $node_version

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[[ "TRACE" ]] && set -x
+[[ "TRACE" ]] 
 
 while [ ! -f /tmp/krb5_test/http.service.keytab ] 
 do

@@ -5,10 +5,10 @@ RUN echo "Server = http://mirror.aarnet.edu.au/pub/archlinux/$repo/os/$arch" >> 
 RUN pacman --noconfirm -Syu
 
 # Install misc
-RUN pacman --noconfirm -S wget git vim sudo
+RUN pacman --noconfirm -S wget git vim sudo make
 
-# Install compilation tools
-RUN pacman --noconfirm -S python2 gcc bison make
+# Install Kerberos libs
+RUN pacman --noconfirm -S krb5
 
 # Install Node.js via n
 ENV NPM_CONFIG_LOGLEVEL info

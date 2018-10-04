@@ -3,30 +3,25 @@ fs = require 'fs'
 
 
 cleanup = (ctx, princ, ccache) ->
-  if princ
-    k.krb5_free_principal_sync ctx, princ
+  k.krb5_free_principal_sync ctx, princ if princ
+  
   if ccache
     k.krb5_cc_close ctx, ccache, (err) ->
-      if ctx
-        k.krb5_free_context_sync ctx
-  else if ctx
-    k.krb5_free_context_sync ctx
+      k.krb5_free_context_sync ctx if ctx
+  else
+    k.krb5_free_context_sync ctx if ctx
 
 
 handle_error = (callback, err, ctx, princ, ccache) ->
-  if !err
-    return err
+  return err unless err
   err = k.krb5_get_error_message_sync(ctx, err)
   cleanup ctx, princ, ccache
   return callback Error err
 
 
 kinit = (options, callback) ->
-  if !options.principal
-    return callback Error 'Please specify principal for kinit'
-    
-  if !options.password and !options.keytab
-    return callback Error 'Please specify password or keytab for kinit'
+  return callback Error 'Please specify principal for kinit' unless options.principal
+  return callback Error 'Please specify password or keytab for kinit' unless options.password or options.keytab
 
   if options.principal.indexOf('@') != -1
     split = options.principal.split('@')
@@ -95,6 +90,7 @@ kinit = (options, callback) ->
     store_creds = (creds) ->
       k.krb5_cc_store_cred ctx, ccache, creds, (err) ->
         return handle_error callback, err, ctx, princ, ccache if err
+        cleanup ctx, princ, ccache
         callback undefined, ccname
   
   do_init()

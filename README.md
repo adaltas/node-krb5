@@ -123,7 +123,7 @@ One of both should be given for authentication.
 Kerberos realm (usually capitalized domain name). If this is not specified, use the default realm from `/etc/krb5.conf`.
 
 * `ccname` (optionnal)  
-Credential cache location. If this is not specified, default path is taken from environment variable `KRB5CCNAME`, then from `/etc/krb5.conf`. Current implementation uses process environment variable and is **not thread safe**. Only use if you want to switch path once for all. 
+Credential cache location. If this is not specified, default path is taken from environment variable `KRB5CCNAME`, then from `/etc/krb5.conf`. 
 
 Callback parameters:
 * `err`  

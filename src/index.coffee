@@ -56,7 +56,6 @@ kinit = (options, callback) ->
       if options.ccname.indexOf(':KEYRING') != -1
         cleanup ctx, princ
         return callback Error 'KEYRING method not supported.'
-      process.env.KRB5CCNAME = options.ccname
       k.krb5_cc_resolve ctx, options.ccname, (err, ccache) ->
         return handle_error callback, err, ctx, princ if err
         do_creds ctx, princ, ccache
@@ -118,16 +117,15 @@ kdestroy = (options, callback) ->
 
 
 spnego = (options, callback) ->
-  if options.ccname
-    process.env.KRB5CCNAME = options.ccname
   service_principal_or_fqdn = null
   service_principal_or_fqdn ?= options.service_principal
   service_principal_or_fqdn ?= options.service_fqdn
   return callback Error 'Missing property "service_principal" or "service_fqdn"' unless service_principal_or_fqdn
   service_principal_or_fqdn = "HTTP@#{service_principal_or_fqdn}" unless /HTTP[@\/]/.test service_principal_or_fqdn
+  options.ccname ?= ""
 
-  k.generate_spnego_token service_principal_or_fqdn, (gss_err, gss_minor, token) ->
-    return callback (if gss_err is 0 then undefined else gss_err), token
+  k.generate_spnego_token service_principal_or_fqdn, options.ccname, (gss_err, gss_minor, token) ->
+    return callback (if gss_err is 0 then undefined else gss_minor), token
 
 
 krb5 = ->

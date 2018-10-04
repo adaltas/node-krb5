@@ -16,8 +16,10 @@ bool exists(const char* path){
 class Worker_generate_spnego_token : public Napi::AsyncWorker {
   public:
     Worker_generate_spnego_token(std::string str_server,
+                                 std::string ccname,
                                  Napi::Function& callback)
-      : Napi::AsyncWorker(callback), str_server(str_server) {
+      : Napi::AsyncWorker(callback), str_server(str_server), 
+                                     krb_ccname(ccname) {
     }
 
   private:
@@ -39,8 +41,14 @@ class Worker_generate_spnego_token : public Napi::AsyncWorker {
       if(gss_err) {
         return;
       }
+
+      OM_uint32 gss_minor;    
+      // gss_krb5_ccache_name is actually thread safe, as discussed in https://krbdev.mit.narkive.com/hOSNjHRA/krb5-get-in-tkt-with-password-gss-init-sec-context
+      if (krb_ccname != "") {
+        gss_err = gss_krb5_ccache_name(&gss_minor, krb_ccname.c_str(), NULL);
+      }
       gss_err = gss_init_sec_context((OM_uint32*)&this->err,
-                      GSS_C_NO_CREDENTIAL,
+                      GSS_C_NO_CREDENTIAL, // uses ccache specified with gss_krb5_ccache_name or default
                       &gss_context,
                       target_name,
                       GSS_MECH_SPNEGO,
@@ -99,6 +107,7 @@ class Worker_generate_spnego_token : public Napi::AsyncWorker {
 
     // In parameter
     std::string str_server;
+    std::string krb_ccname;
 
     // Out parameter
     OM_uint32 gss_err;
@@ -106,14 +115,15 @@ class Worker_generate_spnego_token : public Napi::AsyncWorker {
 };
 
 Napi::Value _generate_spnego_token(const Napi::CallbackInfo& info) {
-  if (info.Length() < 2) {
-    throw Napi::TypeError::New(info.Env(), "2 arguments expected");
+  if (info.Length() < 3) {
+    throw Napi::TypeError::New(info.Env(), "3 arguments expected");
   }
 
   std::string server = info[0].As<Napi::String>().Utf8Value();
-  Napi::Function callback = info[1].As<Napi::Function>();
+  std::string ccname = info[1].As<Napi::String>().Utf8Value();
+  Napi::Function callback = info[2].As<Napi::Function>();
 
-  Worker_generate_spnego_token* worker = new Worker_generate_spnego_token(server, callback);
+  Worker_generate_spnego_token* worker = new Worker_generate_spnego_token(server, ccname, callback);
   worker->Queue();
   return info.Env().Undefined();
 }

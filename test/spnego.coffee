@@ -55,6 +55,30 @@ describe 'spnego', ->
             done()
           .end()
 
+    it 'authenticates to REST server with SPNEGO token given ccache name', (done) ->
+      krb5.kinit
+        principal: 'rest/rest.krb.local'
+        keytab: 'FILE:/tmp/krb5_test/rest.service.keytab'
+        realm: 'KRB.LOCAL'
+        ccname: '/tmp/customcc'
+      , (err, ccname) ->
+        krb5.spnego
+          service_fqdn: 'rest.krb.local'
+          ccname: '/tmp/customcc'
+        , (err, token) ->
+          token.should.be.String()
+
+          http.request
+            hostname: 'rest.krb.local'
+            port: 8080
+            path: '/'
+            method: 'GET'
+            headers:
+              Authorization: 'Negotiate ' + token
+          , (res) ->
+            res.statusCode.should.be.eql(200)
+            done()
+          .end()
 
 ###
   describe 'function with promise', ->

@@ -98,7 +98,7 @@ describe 'kinit', ->
         ccname: '/tmp/customcc'
       , (err, ccname) ->
         (err is undefined).should.be.true()
-        ccname.should.startWith('/tmp')
+        ccname.should.be.eql('/tmp/customcc')
         done()
 
 ###

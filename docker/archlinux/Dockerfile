@@ -5,7 +5,10 @@ RUN echo "Server = http://mirror.aarnet.edu.au/pub/archlinux/$repo/os/$arch" >> 
 RUN pacman --noconfirm -Syu
 
 # Install misc
-RUN pacman --noconfirm -S wget git vim sudo make
+RUN pacman --noconfirm -S wget git vim sudo 
+
+# Install compilation tools
+RUN pacman --noconfirm -S python2 gcc make
 
 # Install Kerberos libs
 RUN pacman --noconfirm -S krb5

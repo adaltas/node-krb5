@@ -6,6 +6,9 @@ RUN yum install -y epel-release
 # Install misc
 RUN yum install -y wget git vim sudo make
 
+# Install compilation tools
+RUN yum install -y python2 gcc-c++ make
+
 # Install Kerberos libs
 RUN yum install krb5-devel
 

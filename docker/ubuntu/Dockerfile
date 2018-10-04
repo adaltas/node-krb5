@@ -6,6 +6,10 @@ RUN apt-get update
 # Install misc
 RUN apt-get install -y wget git vim sudo make
 
+# Install compilation tools
+RUN apt-get install -y python2.7 g++ make
+RUN rm -f /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python
+
 # Install Kerberos libs
 RUN apt-get install -y libkrb5-dev
 

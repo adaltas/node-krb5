@@ -57,7 +57,7 @@ sudo make install
 The latest version downloaded with `wget` can be found [here](https://web.mit.edu/kerberos/).
 
 
-Compiling from the source of MIT Kerberos requires `python2`, `make`, `gcc` (`g++`), `bison` and `byacc`. Clone this repository and then run:
+Compiling from the source of MIT Kerberos requires `python2`, `make`, `gcc` (`g++`), `bison`.
 
 If you want to install MIT Kerberos in another directory (default is "/usr/local"), specify a `--prefix` option to `./configure`.
 

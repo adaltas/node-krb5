@@ -509,8 +509,8 @@ Napi::Value _krb5_free_creds_sync(const Napi::CallbackInfo& info) {
   }
 
   krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
-  krb5_creds *krb_creds = info[1].As<Napi::External<krb5_creds>>().Data();
-  krb5_free_creds(krb_context, krb_creds);
+  krb5_creds krb_creds = *info[1].As<Napi::Buffer<krb5_creds>>().Data();
+  krb5_free_creds(krb_context, &krb_creds);
 
   return info.Env().Undefined();
 }

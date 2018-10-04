@@ -81,29 +81,6 @@ krb5.kinit({
 });
 ```
 
-**For better readability**, configure a `krb5` instance and chain methods:
-```js
-krb5({
-  principal: 'hbase/m01.krb.local',
-  keytab: '/tmp/hbase.service.keytab',
-  realm: 'KRB.LOCAL',
-  service_fqdn: 'm01.krb.local'
-}).kinit(function (err, ccname) {
-  if (err) {
-    console.log(err)
-  } else {
-    console.log('Credentials saved in', ccname)
-  }
-}).spnego(function (err, token) {
-  if (err) {
-    console.log(err)
-  } else {
-    console.log('SPNEGO token :', token)
-  }
-});
-```
-Note that with this syntax, if `kinit` fails (an error code is defined), the rest of the call chain is automatically interrupted, hence `spnego` is not called. 
-
 For more example, see the [samples][samples] and [test][test] directories.
 
 ## Functions

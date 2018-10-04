@@ -12,19 +12,54 @@ It uses the [MIT Kerberos] native library.
 
 ## Installation
 
-To have this module working properly, you should get MIT Kerberos. We recommand avoiding your distribution package as it may not be the MIT version, and future versions of this module may include some MIT Kerberos extensions. 
+To build this module, you need MIT Kerberos library. Refer to the section corresponding to your operating system. 
 
-Compiling from the source of MIT Kerberos requires `python2`, `make`, `gcc` (`g++`), `bison` and `byacc`. Clone this repository and then run:
-```bash
-# To download, compile and install MIT Kerberos 
-npm run krb5-lib 
-# To compile and install the module
-npm install
+### Archlinux
+```
+pacman -S krb5
+npm install krb5
 ```
 
-If MIT Kerberos is already installed on your system, just run `npm install krb5`.
+### RHEL/Centos
+```
+yum install -y krb5-devel
+npm install krb5
+```
 
-If you want to install MIT Kerberos in another directory (default is "/usr/local"), specify a `--prefix` option to `./configure` in the file `install_krb5.sh` before running `npm run krb5-lib`. 
+### Ubuntu
+```
+apt-get install -y libkrb5-dev
+npm install krb5
+```
+
+### MacOS
+```
+brew install krb5
+npm install krb5
+```
+
+### Windows
+
+To compile this library in windows, you need a complete visual studio compile chain, please refer to this [webpage][visual studio]. If you have a 32 bit OS, please delete `binding.gyp` and rename `_binding32.gyp` before install.
+
+### Manual compilation of MIT Kerberos
+
+Follow these instructions if you wish to manually install MIT Kerberos (in case your distribution packet manager does not have a corresponding package for example).
+
+```
+wget https://kerberos.org/dist/krb5/1.16/krb5-1.16.1.tar.gz
+tar -xzf krb5-1.16.1.tar.gz 
+cd krb5-1.16.1/src
+./configure
+make
+sudo make install
+```
+The latest version downloaded with `wget` can be found [here](https://web.mit.edu/kerberos/).
+
+
+Compiling from the source of MIT Kerberos requires `python2`, `make`, `gcc` (`g++`), `bison` and `byacc`. Clone this repository and then run:
+
+If you want to install MIT Kerberos in another directory (default is "/usr/local"), specify a `--prefix` option to `./configure`.
 
 If kerberos is installed in a directory not included in include and/or library path (if you have manually compiled kerberos in a specific directory for example), please modify the binding.gyp present in the package root folder with the following properties:
 
@@ -42,10 +77,6 @@ If kerberos is installed in a directory not included in include and/or library p
 }
 ```
 
-
-## Windows
-
-To compile this library in windows, you need a complete visual studio compile chain, please refer to this [webpage][visual studio]. If you have a 32 bit OS, please delete `binding.gyp` and rename `_binding32.gyp` before install.
 
 
 # Usage

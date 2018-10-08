@@ -170,6 +170,26 @@ Callback parameters:
 * `err`  
 Should be `undefined`. Otherwise it contains an error message.  
 
+
+## Run the the tests
+
+To run the tests in a container:
+```bash
+cd docker && ./run_tests $os
+```
+Available `$os`: archlinux / ubuntu / centos7
+
+To test this module locally, run the KDC and REST dockers, and use the corresponding krb5.conf (bcakup your own if you need it later):
+```bash
+cd docker
+docker-compose up -d kerberos
+docker-compose up -d rest
+sudo mv /etc/krb5.conf /etc/krb5.conf.backup
+sudo cp /tmp/krb5_test/krb5.conf /etc/krb5.conf
+sudo npm test
+```
+
+
 ___
 
 

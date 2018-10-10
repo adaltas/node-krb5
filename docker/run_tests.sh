@@ -6,7 +6,7 @@ if [ "$#" -eq 0 ];then
   exit 1
 fi
 
-docker-compose build
+docker-compose build kerberos rest $1
 docker-compose up -d kerberos
 docker-compose up -d rest
 docker-compose run --rm $1 "/run.sh"

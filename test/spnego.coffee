@@ -32,15 +32,16 @@ describe 'spnego', ->
         done()
       .end()
 
-    it 'authenticates to REST server with SPNEGO token', (done) ->
+    it 'authenticates to REST server with SPNEGO token (hostbased service)', (done) ->
       krb5.kinit
         principal: 'rest/rest.krb.local'
         keytab: 'FILE:/tmp/krb5_test/rest.service.keytab'
         realm: 'KRB.LOCAL'
       , (err, ccname) ->
         krb5.spnego
-          service_fqdn: 'rest.krb.local'
+          hostbased_service: 'HTTP@rest.krb.local'
         , (err, token) ->
+          (err is undefined).should.be.true()
           token.should.be.String()
 
           http.request
@@ -55,17 +56,67 @@ describe 'spnego', ->
             done()
           .end()
 
-    it 'authenticates to REST server with SPNEGO token given ccache name', (done) ->
+    it 'authenticates to REST server with SPNEGO token (service principal)', (done) ->
       krb5.kinit
         principal: 'rest/rest.krb.local'
         keytab: 'FILE:/tmp/krb5_test/rest.service.keytab'
+        realm: 'KRB.LOCAL'
+      , (err, ccname) ->
+        krb5.spnego
+          service_principal: 'HTTP/rest.krb.local@KRB.LOCAL'
+        , (err, token) ->
+          (err is undefined).should.be.true()
+          token.should.be.String()
+
+          http.request
+            hostname: 'rest.krb.local'
+            port: 8080
+            path: '/'
+            method: 'GET'
+            headers:
+              Authorization: 'Negotiate ' + token
+          , (res) ->
+            res.statusCode.should.be.eql(200)
+            done()
+          .end()
+
+    it 'authenticates to REST server with SPNEGO token (service fqdn)', (done) ->
+      krb5.kinit
+        principal: 'rest/rest.krb.local'
+        keytab: 'FILE:/tmp/krb5_test/rest.service.keytab'
+        realm: 'KRB.LOCAL'
+      , (err, ccname) ->
+        krb5.spnego
+          service_fqdn: 'rest.krb.local'
+        , (err, token) ->
+          (err is undefined).should.be.true()
+          token.should.be.String()
+
+          http.request
+            hostname: 'rest.krb.local'
+            port: 8080
+            path: '/'
+            method: 'GET'
+            headers:
+              Authorization: 'Negotiate ' + token
+          , (res) ->
+            res.statusCode.should.be.eql(200)
+            done()
+          .end()
+
+
+    it 'authenticates to REST server with SPNEGO token given ccache name', (done) ->
+      krb5.kinit
+        principal: 'admin'
+        password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
         ccname: '/tmp/customcc'
       , (err, ccname) ->
         krb5.spnego
-          service_fqdn: 'rest.krb.local'
+          hostbased_service: 'HTTP@rest.krb.local'
           ccname: '/tmp/customcc'
         , (err, token) ->
+          (err is undefined).should.be.true()
           token.should.be.String()
 
           http.request
@@ -79,6 +130,7 @@ describe 'spnego', ->
             res.statusCode.should.be.eql(200)
             done()
           .end()
+
 
 ###
   describe 'function with promise', ->

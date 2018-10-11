@@ -146,8 +146,12 @@ In order to retrieve a SPNEGO token to access a service, you first need an initi
 
 
 Options:
-* `service_fqdn`   
-Fully qualified domain name of the service.
+* `hostbased_service` or `service_fqdn`   
+Hostbased service should be of the form `service@fqdn`. If you only pass the fully qualified domain name `fqdn`, it will default to `HTTP@fqdn`.  
+It will be resolved to the corresponding principal `service/fqdn@REALM` by the GSS-API. To use the principal directly, use the `service_principal` option instead.
+
+* `service_principal`  
+Principal of the service.   
 
 * `ccname` (optionnal)  
 Location of the credential cache storing the initial ticket. If not specified, default path is taken. 

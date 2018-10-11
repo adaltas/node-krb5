@@ -117,15 +117,19 @@ kdestroy = (options, callback) ->
 
 
 spnego = (options, callback) ->
-  service_principal_or_fqdn = null
-  service_principal_or_fqdn ?= options.service_principal
-  service_principal_or_fqdn ?= options.service_fqdn
-  return callback Error 'Missing property "service_principal" or "service_fqdn"' unless service_principal_or_fqdn
-  service_principal_or_fqdn = "HTTP@#{service_principal_or_fqdn}" unless /HTTP[@\/]/.test service_principal_or_fqdn
   options.ccname ?= ""
 
-  k.generate_spnego_token service_principal_or_fqdn, options.ccname, (gss_err, gss_minor, token) ->
-    return callback (if gss_err is 0 then undefined else gss_minor), token
+  if options.service_principal
+    input_name_type = 'GSS_C_NT_USER_NAME'
+    service = options.service_principal
+  else if options.service_fqdn or options.hostbased_service
+    input_name_type = 'GSS_C_NT_HOSTBASED_SERVICE'
+    service = options.service_fqdn or options.hostbased_service
+    service = "HTTP@#{service}" unless /.*[@]/.test service
+  else return callback Error 'Missing option "service_principal" or "hostbased_service"'
+
+  k.generate_spnego_token service, input_name_type, options.ccname, (err, token) ->
+    return callback (if err is "" then undefined else err), token
 
 
 krb5 = ->

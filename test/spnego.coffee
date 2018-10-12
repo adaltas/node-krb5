@@ -3,22 +3,6 @@ http = require 'http'
 
 describe 'spnego', ->
 
-###
-  describe 'method with callback', ->
-
-    it 'returns SPNEGO token', (done) ->
-      krb5
-        principal: 'rest/rest.krb.local'
-        keytab: '/tmp/krb5_test/rest.service.keytab'
-        realm: 'KRB.LOCAL'
-        service_fqdn: 'rest.krb.local'
-      .kinit (err, ccname) ->
-      .spnego (gss_err, token) ->
-          (gss_err is undefined).should.be.true()
-          token.should.be.String()
-          done()
-###
-
   describe 'function with callback', ->
     
     it 'checks that server requires authentication', (done) ->

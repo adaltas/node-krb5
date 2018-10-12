@@ -132,51 +132,12 @@ spnego = (options, callback) ->
     return callback (if err is "" then undefined else err), token
 
 
-krb5 = ->
-  options = arguments[0]
-  queue = []
-  err = null
+module.exports =
+  kdestroy: (options, callback) ->
+    if typeof options is 'function'
+      kdestroy {}, options
+    else
+      kdestroy options, callback
 
-  work = ->
-    return unless queue.length
-    [name, args] = queue.shift()
-    switch name
-      when 'kinit'
-        kinit options, (err, ccname) ->
-          if typeof args[0] is 'function'
-            args[0](err, ccname)
-          if !err
-            work()
-      when 'kdestroy'
-        kdestroy options, (err) ->
-          if typeof args[0] is 'function'
-            args[0](err)
-          work()
-      when 'spnego'
-        spnego options, (err, token) ->
-          if typeof args[0] is 'function'
-            args[0](err, token)
-          work()
-
-  process.nextTick work
-
-  kinit: ->
-    queue.push ['kinit', arguments]
-    return this
-  kdestroy: ->
-    queue.push ['kdestroy', arguments]
-    return this
-  spnego: ->
-    queue.push ['spnego', arguments]
-    return this
-
-
-krb5.spnego = spnego
-krb5.kinit = kinit
-krb5.kdestroy = (options, callback) ->
-  if typeof options is 'function'
-    kdestroy {}, options
-  else
-    kdestroy options, callback
-
-module.exports = krb5
+  kinit: kinit
+  spnego: spnego

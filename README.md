@@ -112,6 +112,24 @@ krb5.kinit({
 });
 ```
 
+You can also use promises.
+```js
+krb5.kinit({
+  principal: 'hbase/m01.krb.local',
+  keytab: '/tmp/hbase.service.keytab',
+  realm: 'KRB.LOCAL',
+}).then(function (ccname) {
+  console.log('Credentials saved in', ccname)
+  return krb5.spnego({
+    hostbased_service: 'HTTP@m01.krb.local'
+  })
+}).then(function (token) {
+  console.log('SPNEGO token :', token)
+}).catch(function (err) {
+  console.log(err)
+})
+```
+
 For more example, see the [samples][samples] and [test][test] directories.
 
 ## Functions

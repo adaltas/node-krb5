@@ -22,7 +22,6 @@ describe 'kinit', ->
         (err is undefined).should.be.true()
         ccname.should.startWith('/tmp')
         done err
- 
 
     it 'returns default credential cache path (password provided using realm in principal)', (done) ->
       krb5.kinit
@@ -55,16 +54,15 @@ describe 'kinit', ->
         ccname.should.be.eql('/tmp/customcc')
         done()
 
-###
   describe 'function with promise', ->
+
     it 'returns default credential cache path (password provided)', (done) ->
       krb5.kinit
         principal: 'admin'
         password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
-      .catch done
       .then (ccname) ->
         ccname.should.startWith('/tmp')
         done()
-###
-
+      .catch done
+      return

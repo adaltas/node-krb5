@@ -88,7 +88,6 @@ describe 'spnego', ->
             done()
           .end()
 
-
     it 'authenticates to REST server with SPNEGO token given ccache name', (done) ->
       krb5.kinit
         principal: 'admin'
@@ -115,21 +114,29 @@ describe 'spnego', ->
             done()
           .end()
 
-
-###
   describe 'function with promise', ->
     
     it 'returns SPNEGO token', (done) ->
       krb5.kinit
         principal: 'rest/rest.krb.local'
-        keytab: 'FILE:/tmp/krb5_test/rest.service.keytab'
+        keytab: '/tmp/krb5_test/rest.service.keytab'
         realm: 'KRB.LOCAL'
-      .catch done
-      .then ({ cc_patch }) ->
+      .then (ccname) ->
         krb5.spnego
-          service_fqdn: 'rest.krb.local'
-        .catch done
-        .then (token) ->
-          token.should.be.String()
+          hostbased_service: 'HTTP@rest.krb.local'
+      .then (token) ->
+        token.should.be.String()
+
+        http.request
+          hostname: 'rest.krb.local'
+          port: 8080
+          path: '/'
+          method: 'GET'
+          headers:
+            Authorization: 'Negotiate ' + token
+        , (res) ->
+          res.statusCode.should.be.eql(200)
           done()
-###
+        .end()
+      .catch done
+      return

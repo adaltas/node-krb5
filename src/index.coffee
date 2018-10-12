@@ -118,7 +118,6 @@ kdestroy = (options, callback) ->
 
 spnego = (options, callback) ->
   options.ccname ?= ""
-
   if options.service_principal
     input_name_type = 'GSS_C_NT_USER_NAME'
     service = options.service_principal
@@ -129,15 +128,32 @@ spnego = (options, callback) ->
   else return callback Error 'Missing option "service_principal" or "hostbased_service"'
 
   k.generate_spnego_token service, input_name_type, options.ccname, (err, token) ->
-    return callback (if err is "" then undefined else err), token
+    return callback (if err is "" then undefined else Error err), token
 
 
 module.exports =
-  kdestroy: (options, callback) ->
-    if typeof options is 'function'
-      kdestroy {}, options
-    else
-      kdestroy options, callback
+  kinit: (options, callback) ->
+    return kinit options, callback if typeof callback is 'function'
+    return new Promise (resolve, reject) ->
+      kinit options, (err, ccname) ->
+        reject err if err
+        resolve ccname
 
-  kinit: kinit
-  spnego: spnego
+  spnego: (options, callback) ->
+    return spnego options, callback if typeof callback is 'function'
+    return new Promise (resolve, reject) ->
+      spnego options, (err, token) ->
+        reject err if err
+        resolve token
+
+  kdestroy: (options, callback) ->
+    options ?= {}
+    if typeof options is 'function'
+      callback = options
+      return kdestroy {}, callback
+    else
+      return kdestroy options, callback if typeof callback is 'function'
+      return new Promise (resolve, reject) ->
+        kdestroy options, (err) ->
+          reject err if err
+          resolve()

@@ -30,7 +30,7 @@ kinit = (options, callback) ->
 
   do_init = ->
     k.krb5_init_context (err, ctx) ->
-      return handle_error callback, err if err
+      return handle_error callback, err, ctx if err
       do_realm ctx
 
   do_realm = (ctx) ->

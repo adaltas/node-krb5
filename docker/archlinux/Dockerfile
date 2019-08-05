@@ -1,4 +1,4 @@
-FROM base/archlinux
+FROM archlinux/base
 
 # Update repositories
 RUN echo "Server = http://mirror.aarnet.edu.au/pub/archlinux/$repo/os/$arch" >> /etc/pacman.d/mirrorlist

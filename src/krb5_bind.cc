@@ -1,4 +1,7 @@
 #include "krb5_bind.h"
+#ifdef __MVS__
+#include "krb5_zos.h"
+#endif
 
 
 /**
@@ -19,6 +22,9 @@ class Worker_krb5_build_principal : public Napi::AsyncWorker {
 
   private:
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       auto pos = user.find("/");
       if(pos != std::string::npos) {
         err = krb5_build_principal(context,
@@ -96,6 +102,9 @@ class Worker_krb5_cc_close : public Napi::AsyncWorker {
 
   private:
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       err = krb5_cc_close(krb_context, krb_ccache);
     }
 
@@ -143,6 +152,9 @@ class Worker_krb5_cc_default: public Napi::AsyncWorker {
 
   private:
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       err = krb5_cc_default(context, &ccache);
     }
 
@@ -191,6 +203,9 @@ class Worker_krb5_cc_destroy : public Napi::AsyncWorker {
 
   private:
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       err = krb5_cc_destroy(krb_context, krb_ccache);
     }
 
@@ -278,6 +293,9 @@ class Worker_krb5_cc_initialize : public Napi::AsyncWorker {
 
   private:
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       err = krb5_cc_initialize(krb_context, krb_ccache, krb_princ);
     }
 
@@ -335,6 +353,9 @@ class Worker_krb5_cc_resolve : public Napi::AsyncWorker {
 
   private:
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       err = krb5_cc_resolve(krb_context, cc_name.c_str(), &ccache);
     }
 
@@ -397,6 +418,9 @@ class Worker_krb5_cc_store_cred : public Napi::AsyncWorker {
 
   private:
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       err = krb5_cc_store_cred(krb_context, krb_ccache, &krb_creds);
     }
 
@@ -447,6 +471,9 @@ class Worker_krb5_free_context : public Napi::AsyncWorker {
 
   private:
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       krb5_free_context(context);
     }
 
@@ -527,6 +554,9 @@ class Worker_krb5_get_default_realm : public Napi::AsyncWorker {
 
   private:
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       err = krb5_get_default_realm(context, &realm);
       //pid_t pid = syscall(__NR_gettid);
       //std::cout << "get)Thread id : " << pid << std::endl;
@@ -599,6 +629,9 @@ class Worker_krb5_get_init_creds_password : public Napi::AsyncWorker {
 
   private:
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       err = krb5_get_init_creds_password(krb_context, 
                                          &creds,
                                          krb_princ,
@@ -660,6 +693,9 @@ class Worker_krb5_init_context : public Napi::AsyncWorker {
 
   private:
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       err = krb5_init_context(&context);
     }
 
@@ -708,6 +744,9 @@ class Worker_krb5_kt_resolve : public Napi::AsyncWorker {
 
   private:
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       err = krb5_kt_resolve(krb_context, kt_name.c_str(), &ktid);
     }
 
@@ -770,6 +809,9 @@ class Worker_krb5_get_init_creds_keytab : public Napi::AsyncWorker {
 
   private:
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       err = krb5_get_init_creds_keytab(krb_context,
                                        &creds,
                                        krb_client,

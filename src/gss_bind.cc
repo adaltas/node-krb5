@@ -1,5 +1,8 @@
 #include <sys/stat.h>
 #include "gss_bind.h"
+#ifdef __MVS__
+#include "krb5_zos.h"
+#endif
 
 static gss_OID_desc _gss_mech_spnego = {6, (void*)"\x2b\x06\x01\x05\x05\x02"}; //Spnego OID: 1.3.6.1.5.5.2
 static const gss_OID GSS_MECH_SPNEGO= &_gss_mech_spnego; //gss_OID == gss_OID_desc*
@@ -36,6 +39,9 @@ class Worker_generate_spnego_token : public Napi::AsyncWorker {
     }
 
     void Execute() {
+#ifdef __MVS__
+      __ae_runmode rm(__AE_ASCII_MODE);
+#endif
       const char* server = str_server.c_str();
       gss_ctx_id_t gss_context = GSS_C_NO_CONTEXT;
       gss_buffer_desc input_buf,output_buf;

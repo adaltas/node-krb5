@@ -82,9 +82,7 @@ If kerberos is installed in a directory not included in include and/or library p
 }
 ```
 
-### Maunal install node-krb5 on z/OS
-
-If you wish to manually install node-krb5, 
+### Maunally install node-krb5 on z/OS
 
 1. git clone node-krb5
 2. run the following command to install krb5 libraries for z/OS

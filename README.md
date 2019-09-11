@@ -89,7 +89,9 @@ If kerberos is installed in a directory not included in include and/or library p
 1. git clone node-krb5
 2. run the following command to install krb5 libraries for z/OS (it requires [curl for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/curl-for-zos) and [gzip for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/gzip-zos))
 ```
-curl https://codeload.github.com/ibmruntimes/libkrb5-zos/tar.gz/v1.16.3-zos  | iconv -t 819 -f 1047 | gzip -d  | tar -xfUXo -
+curl https://codeload.github.com/ibmruntimes/libkrb5-zos/tar.gz/v1.16.3-zos --output v1.16.3-zos.tar.gz
+gzip -d v1.16.3-zos.tar.gz
+tar -xfUXo v1.16.3-zos.tar
 chtag -tc 819 -R ./libkrb5-zos-1.16.3-zos
 chtag -b -R ./libkrb5-zos-1.16.3-zos/lib
 ```
@@ -100,7 +102,7 @@ chtag -b -R ./libkrb5-zos-1.16.3-zos/lib
 export KRB5_HOME=/path/to/libkrb5-zos-1.16.3-zos
 ```
 
-4. run `npm install`
+4. run `MANUAL=1 npm install`
 
 Remember to specify your `krb5.conf`:
 

@@ -7,7 +7,7 @@ function installer() {
     if (!process.env.MANUAL && platform == 'os390') {
         execSync(". ./install_krb5_zos.sh && node-gyp rebuild", { stdio: 'inherit' }); 
     } else {
-        spawn("node-gyp", ["rebuild"], { stdio: 'inherit' });     
+        execSync("node-gyp rebuild", { stdio: 'inherit' }); 
     }
 }
 

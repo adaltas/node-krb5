@@ -16,9 +16,10 @@ RUN yum install -y krb5-devel
 ENV NPM_CONFIG_LOGLEVEL info
 RUN git clone https://github.com/tj/n /n
 RUN cd /n && make install
-RUN n 6.14.4
-RUN n 8.12.0
-RUN n 10.11.0
+run n 6.17.1
+run n 8.16.1
+run n 10.16.3
+run n 12.10.0
 
 RUN mkdir -p /node-krb5
 COPY ./run.sh /run.sh

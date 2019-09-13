@@ -13,7 +13,7 @@ do
 done
 cd /node-krb5
 cp /tmp/krb5_test/krb5.conf /etc/krb5.conf
-for node_version in "10.11.0" "8.12.0" "6.14.4"; do
+for node_version in "12", "10" "8" "6"; do
   echo "Node.js version "$node_version
   n $node_version
   # --unsafe-perm allows node-gyp build as root
@@ -29,5 +29,5 @@ for node_version in "10.11.0" "8.12.0" "6.14.4"; do
     echo -e $GREEN"Tests passed for Node.js "$node_version$NC
   fi
 done
-echo -e $GREEN"Tests passed for Node.js version 6, 8 and 10"$NC
+echo -e $GREEN"Tests passed for Node.js version 6, 8, 10 and 12"$NC
 exit 0

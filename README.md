@@ -42,6 +42,10 @@ npm install krb5
 
 To compile this library in windows, you need a complete visual studio compile chain, please refer to this [webpage][visual studio]. If you have a 32 bit OS, please delete `binding.gyp` and rename `_binding32.gyp` before install.
 
+### z/OS
+
+Install [curl for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/curl-for-zos) and [gzip for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/gzip-zos), then follow the instruction [here](#install-node-krb5-on-zos).
+
 ### Manual compilation of MIT Kerberos
 
 Follow these instructions if you wish to manually install MIT Kerberos (in case your distribution packet manager does not have a corresponding package for example).
@@ -77,7 +81,30 @@ If kerberos is installed in a directory not included in include and/or library p
 }
 ```
 
+### Install node-krb5 on z/OS
 
+1. run the following command to install krb5 libraries for z/OS (it requires [curl for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/curl-for-zos) and [gzip for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/gzip-zos))
+```
+_ENCODE_FILE_NEW=BINARY curl https://codeload.github.com/ibmruntimes/libkrb5-zos/tar.gz/v1.16.3-zos --output v1.16.3-zos.tar.gz
+gzip -d v1.16.3-zos.tar.gz
+tar -xfUXo v1.16.3-zos.tar
+chtag -tc 819 -R ./libkrb5-zos-1.16.3-zos
+chtag -b -R ./libkrb5-zos-1.16.3-zos/lib
+```
+
+2. set the following environment variable
+
+```
+export KRB5_HOME=/path/to/libkrb5-zos-1.16.3-zos
+```
+
+3. `npm install node-krb5`
+
+Remember to specify your `krb5.conf`:
+
+```
+export KRB5_CONFIG=/path/to/krb5.conf
+```
 
 # Usage
 

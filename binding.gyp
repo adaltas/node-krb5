@@ -7,8 +7,6 @@
             "./src/gss_bind.cc",
             "./src/base64.cc"
         ],
-        'cflags!': ['-fno-exceptions'],
-        'cflags_cc!': ['-fno-exceptions'],
         'include_dirs': ["<!@(node -p \"require('node-addon-api').include\")"],
         'dependencies': ["<!(node -p \"require('node-addon-api').gyp\")"],
         'cflags!': ['-fno-exceptions'],
@@ -60,7 +58,28 @@
                 {
                     "libraries": ["-lkrb5", "-lgssapi_krb5"]
                 }
-            ]
+            ],
+            [
+                "OS=='zos'",
+                {
+                    'cflags': ['-qASCII', '-qNOOPT'],
+                    'cflags_cc': ['-qASCII', '-qNOOPT'],
+                    'cxxflags_cc': ['-qASCII', '-qNOOPT'],
+                    'include_dirs': [
+                        '$(KRB5_HOME)/include/',
+                        '$(KRB5_HOME)/include/gssapi/'
+                    ],
+                    'libraries': [
+                        '$(KRB5_HOME)/lib/libgssrpc.a',
+                        '$(KRB5_HOME)/lib/libgssapi_krb5.a',
+                        '$(KRB5_HOME)/lib/libkrb5.a',
+                        '$(KRB5_HOME)/lib/libk5crypto.a',
+                        '$(KRB5_HOME)/lib/libcom_err.a',
+                        '$(KRB5_HOME)/lib/libkrb5support.a'
+                    ],
+                    "libraries!": ["-lkrb5", "-lgssapi_krb5"]
+                }
+            ],
         ]
     }]
 }

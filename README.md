@@ -44,7 +44,7 @@ To compile this library in windows, you need a complete visual studio compile ch
 
 ### z/OS
 
-Install [curl for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/curl-for-zos) and [gzip for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/gzip-zos), then follow the instruction [here](#install-node-krb5-on-z/os).
+Install [curl for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/curl-for-zos) and [gzip for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/gzip-zos), then follow the instruction [here](#install-node-krb5-on-zos).
 
 ### Manual compilation of MIT Kerberos
 

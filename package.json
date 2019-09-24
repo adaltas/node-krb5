@@ -40,7 +40,8 @@
     "coffee": "coffee -b -o lib src",
     "rebuild": "node-gyp rebuild",
     "test": "mocha test/kinit.coffee test/kdestroy.coffee test/spnego.coffee",
-    "install": "node install.js",
-    "krb5-lib": "./install_krb5.sh"
+    "install": "node-gyp rebuild",
+    "krb5-lib": "./install_krb5.sh",
+    "krb5-lib-zos": "./install_krb5_zos.sh"
   }
 }

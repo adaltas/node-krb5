@@ -44,10 +44,7 @@ To compile this library in windows, you need a complete visual studio compile ch
 
 ### z/OS
 
-Install [curl for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/curl-for-zos) and [gzip for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/gzip-zos), then
-```
-npm install krb5
-```
+Install [curl for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/curl-for-zos) and [gzip for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/gzip-zos), then follow the instruction [here](#install-node-krb5-on-z/os).
 
 ### Manual compilation of MIT Kerberos
 
@@ -84,25 +81,24 @@ If kerberos is installed in a directory not included in include and/or library p
 }
 ```
 
-### Maunally install node-krb5 on z/OS
+### Install node-krb5 on z/OS
 
-1. git clone node-krb5
-2. run the following command to install krb5 libraries for z/OS (it requires [curl for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/curl-for-zos) and [gzip for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/gzip-zos))
+1. run the following command to install krb5 libraries for z/OS (it requires [curl for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/curl-for-zos) and [gzip for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/gzip-zos))
 ```
-curl https://codeload.github.com/ibmruntimes/libkrb5-zos/tar.gz/v1.16.3-zos --output v1.16.3-zos.tar.gz
+_ENCODE_FILE_NEW=BINARY curl https://codeload.github.com/ibmruntimes/libkrb5-zos/tar.gz/v1.16.3-zos --output v1.16.3-zos.tar.gz
 gzip -d v1.16.3-zos.tar.gz
 tar -xfUXo v1.16.3-zos.tar
 chtag -tc 819 -R ./libkrb5-zos-1.16.3-zos
 chtag -b -R ./libkrb5-zos-1.16.3-zos/lib
 ```
 
-3. set the following environment variable
+2. set the following environment variable
 
 ```
 export KRB5_HOME=/path/to/libkrb5-zos-1.16.3-zos
 ```
 
-4. run `MANUAL=1 npm install`
+3. `npm install node-krb5`
 
 Remember to specify your `krb5.conf`:
 

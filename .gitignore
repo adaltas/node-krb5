@@ -3,4 +3,6 @@
 .DS_Store
 *.log
 !.gitignore
-.vscode/
+.vscode
+package-lock.json
+yarn.lock

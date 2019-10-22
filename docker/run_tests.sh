@@ -2,7 +2,7 @@
 
 set +e
 if [ "$#" -eq 0 ];then
-	echo "No environment set"
+	echo "No environment set: archlinux, centos7, ubuntu"
   exit 1
 fi
 

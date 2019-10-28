@@ -1,6 +1,11 @@
 
 # Changelog
 
+## Trunk
+
+* package: use latest versions
+* build: osx now back working
+
 ## Version 0.5.2
 
 * src: support node-krb5 on z/OS

@@ -15,28 +15,34 @@ It uses the [MIT Kerberos] native library.
 To build this module, you need MIT Kerberos library. Refer to the section corresponding to your operating system. 
 
 ### Archlinux
+
 ```
 pacman -S krb5
 npm install krb5
 ```
 
 ### RHEL/Centos
+
 ```
 yum install -y krb5-devel
 npm install krb5
 ```
 
 ### Ubuntu
+
 ```
 apt-get install -y libkrb5-dev
 npm install krb5
 ```
 
 ### MacOS
+
 ```
 brew install krb5
 npm install krb5
 ```
+
+Python 2 must be available in your path. You can check it by running `python --version`. It should something like "Python 2.7.16". If not, you must ensure that python 2 is used, for by placing back the original path: `PATH="/usr/bin:$PATH" npm install`
 
 ### Windows
 

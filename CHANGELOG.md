@@ -1,7 +1,7 @@
 
 # Changelog
 
-## Trunk
+## Version 0.5.3
 
 * package: use latest versions
 * build: osx now back working

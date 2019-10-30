@@ -7,46 +7,39 @@ krb5 is a Node.js native binding for Kerberos. It is a Node.js implementation of
 * **kdestroy**: destroy a credential cache;
 * **spnego**: generate a SPNEGO token.
 
-It uses the [MIT Kerberos] native library.  
-[SPNEGO] is a GSS mechanism to authenticate through HTML requests.
+It uses the [MIT Kerberos](http://web.mit.edu/kerberos/) native library.  
+[SPNEGO](http://en.wikipedia.org/wiki/SPNEGO) is a GSS mechanism to authenticate through HTML requests.
 
 ## Installation
 
-To build this module, you need MIT Kerberos library. Refer to the section corresponding to your operating system. 
+To build this module, you need MIT Kerberos library. Refer to the section corresponding to your operating system:
 
-### Archlinux
-
-```
-pacman -S krb5
-npm install krb5
-```
-
-### RHEL/Centos
-
-```
-yum install -y krb5-devel
-npm install krb5
-```
-
-### Ubuntu
-
-```
-apt-get install -y libkrb5-dev
-npm install krb5
-```
-
-### MacOS
-
-```
-brew install krb5
-npm install krb5
-```
+* Archlinux
+  ```
+  pacman -S krb5
+  npm install krb5
+  ```
+* RHEL/Centos
+  ```
+  yum install -y krb5-devel
+  npm install krb5
+  ```
+* Ubuntu
+  ```
+  apt-get install -y libkrb5-dev
+  npm install krb5
+  ```
+* MacOS
+  ```
+  brew install krb5
+  npm install krb5
+  ```
 
 Python 2 must be available in your path. You can check it by running `python --version`. It should something like "Python 2.7.16". If not, you must ensure that python 2 is used, for by placing back the original path: `PATH="/usr/bin:$PATH" npm install`.
 
 ### Windows
 
-To compile this library in windows, you need a complete visual studio compile chain, please refer to this [webpage][visual studio]. If you have a 32 bit OS, please delete `binding.gyp` and rename `_binding32.gyp` before install.
+To compile this library in windows, you need a complete visual studio compile chain, please refer to this [webpage](https://github.com/TooTallNate/node-gyp/wiki/Visual-Studio-2010-Setup). If you have a 32 bit OS, please delete `binding.gyp` and rename `_binding32.gyp` before install.
 
 ### z/OS
 
@@ -146,6 +139,7 @@ krb5.kinit({
 ```
 
 You can also use promises.
+
 ```js
 krb5.kinit({
   principal: 'hbase/m01.krb.local',
@@ -163,78 +157,80 @@ krb5.kinit({
 })
 ```
 
-For more example, see the [samples][samples] and [test][test] directories.
+For more examples, see the [samples](https://github.com/adaltas/node-krb5/tree/master/samples) and [test](https://github.com/adaltas/node-krb5/tree/master/test) directories.
 
 ## Functions
 
+### `kinit(options, callback)`
 
-### `kinit(options, callback)` : retrieve initial credentials (*Ticket Granting Ticket*)
+Retrieve initial credentials (*Ticket Granting Ticket*)
 
+Options:
 
-Options:  
 * `principal`   
-Kerberos principal *username@REALM* or *username*. If realm is given, overrides the realm option.
-
+  Kerberos principal *username@REALM* or *username*. If realm is given, overrides the realm option.
 * `password` / `keytab`   
-One of both should be given for authentication.
-
-* `realm` (optionnal)  
-Kerberos realm (usually capitalized domain name). If this is not specified, use the default realm from `/etc/krb5.conf`.
-
-* `ccname` (optionnal)  
-Credential cache location. If this is not specified, default path is taken from environment variable `KRB5CCNAME`, then from `/etc/krb5.conf`. 
+  One of both should be given for authentication.
+* `realm` (optionnal)   
+  Kerberos realm (usually capitalized domain name). If this is not specified, use the default realm from `/etc/krb5.conf`.
+* `ccname` (optionnal)   
+  Credential cache location. If this is not specified, default path is taken from environment variable `KRB5CCNAME`, then from `/etc/krb5.conf`. 
 
 Callback parameters:
-* `err`  
-Should be `undefined`. Otherwise it contains an error message.  
 
-* `ccname`  
-Credential path location used to store initial credentials. 
+* `err`   
+  Should be `undefined`. Otherwise it contains an error message.  
+* `ccname`   
+  Credential path location used to store initial credentials. 
 
-### `spnego(options, callback)` : retrieve a SPNEGO token. 
+### `spnego(options, callback)`
+
+Retrieve a SPNEGO token. 
 
 In order to retrieve a SPNEGO token to access a service, you first need an initial ticket (TGT) which you can get with `kinit`.
 
-
 Options:
+
 * `hostbased_service` or `service_fqdn`   
-Hostbased service should be of the form `service@fqdn`. If you only pass the fully qualified domain name `fqdn`, it will default to `HTTP@fqdn`.  
-It will be resolved to the corresponding principal `service/fqdn@REALM` by the GSS-API. To use the principal directly, use the `service_principal` option instead.
-
-* `service_principal`  
-Principal of the service.   
-
+  Hostbased service should be of the form `service@fqdn`. If you only pass the fully qualified domain name `fqdn`, it will default to `HTTP@fqdn`.   
+  It will be resolved to the corresponding principal `service/fqdn@REALM` by the GSS-API. To use the principal directly, use the `service_principal` option instead.
+* `service_principal`   
+  Principal of the service.   
 * `ccname` (optionnal)  
-Location of the credential cache storing the initial ticket. If not specified, default path is taken. 
+  Location of the credential cache storing the initial ticket. If not specified, default path is taken. 
 
 Callback parameters:
-* `err`  
-Should be `undefined`. Otherwise contains GSS API major error code.
 
-* `token`  
-The SPNEGO token to access the service. It can then be added to the header of the HTTP request `Authorization: Negociate {token}`
-
+* `err`   
+  Should be `undefined`. Otherwise contains GSS API major error code.
+* `token`   
+  The SPNEGO token to access the service. It can then be added to the header of the HTTP request `Authorization: Negociate {token}`.
 
 ### `kdestroy (options, callback)` : destroys credential cache
 
-Options:  
-* `ccname` (optionnal)  
-Credential cache location. If this is not specified, default path is taken from environment variable `KRB5CCNAME`, then from `/etc/krb5.conf`. 
+Options:
+
+* `ccname` (optionnal)   
+  Credential cache location. If this is not specified, default path is taken from environment variable `KRB5CCNAME`, then from `/etc/krb5.conf`. 
 
 Callback parameters:
-* `err`  
-Should be `undefined`. Otherwise it contains an error message.  
+
+* `err`   
+  Should be `undefined`. Otherwise it contains an error message.  
 
 
-## Run the the tests
+## Run the tests
 
 To run the tests in a container:
+
 ```bash
 cd docker && ./run_tests $os
 ```
+
 Available `$os`: archlinux / ubuntu / centos7
 
 To test this module locally, run the KDC and REST dockers, and use the corresponding krb5.conf (bcakup your own if you need it later):
+
 ```bash
 cd docker
 docker-compose up -d kerberos
@@ -243,15 +239,3 @@ sudo mv /etc/krb5.conf /etc/krb5.conf.backup
 sudo cp /tmp/krb5_test/krb5.conf /etc/krb5.conf
 sudo npm test
 ```
-
-
-___
-
-
-
-[MIT Kerberos]: http://web.mit.edu/kerberos/
-[SPNEGO]: http://en.wikipedia.org/wiki/SPNEGO
-[MIT Kerberos Dist]: http://web.mit.edu/kerberos/dist/
-[visual studio]:https://github.com/TooTallNate/node-gyp/wiki/Visual-Studio-2010-Setup
-[samples]: https://github.com/adaltas/node-krb5/tree/master/samples
-[test]: https://github.com/adaltas/node-krb5/tree/master/test

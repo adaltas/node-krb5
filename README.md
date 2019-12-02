@@ -39,7 +39,7 @@ Python 2 must be available in your path. You can check it by running `python --v
 
 ### Windows
 
-To compile this library in windows, you need a complete visual studio compile chain, please refer to this [webpage](https://github.com/TooTallNate/node-gyp/wiki/Visual-Studio-2010-Setup). If you have a 32 bit OS, please delete `binding.gyp` and rename `_binding32.gyp` before install.
+To compile this library in windows, you need a complete visual studio compile chain, please refer to the [node-gyp instructions](https://github.com/nodejs/node-gyp#on-windows). If you have a 32 bit OS, please delete `binding.gyp` and rename `_binding32.gyp` before install.
 
 ### z/OS
 

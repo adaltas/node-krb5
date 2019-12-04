@@ -13,16 +13,11 @@
     "should": "13.2.3"
   },
   "gypfile": true,
-  "author": "Pierre Sauvage",
+  "author": "Xavier Hermand <xavier@adaltas.com> (https://www.adaltas.com)",
   "contributors": [
-    {
-      "name": "Pierre Sauvage",
-      "email": "pierre@adaltas.com"
-    },
-    {
-      "name": "Xavier Hermand",
-      "email": "xavier@adaltas.com"
-    }
+    "David Worms <david@adaltas.com> (https://www.adaltas.com)",
+    "Pierre Sauvage <pierre@adaltas.com> (https://www.adaltas.com)",
+    "Xavier Hermand <xavier@adaltas.com> (https://www.adaltas.com)"
   ],
   "license": "BSD-3-Clause",
   "keywords": [

@@ -1,4 +1,5 @@
 #include <sys/stat.h>
+#include <math.h>
 #include "gss_bind.h"
 #ifdef __MVS__
 #include "krb5_zos.h"
@@ -12,6 +13,9 @@ bool exists(const char* path){
   return (stat(path, &buffer) == 0);
 }
 
+int get_base64_length(const int raw_length) {
+  return (floor(raw_length / 3) + 1) * 4 + 1;
+}
 
 /**
  * generate_spnego_token
@@ -73,10 +77,12 @@ class Worker_generate_spnego_token : public Napi::AsyncWorker {
                                      NULL);
 
       if(!(GSS_ERROR(gss_err))) {
-        char token_buffer[2048];
+        const int base64_length = get_base64_length(output_buf.length);
+        char* token_buffer = (char*) malloc(base64_length);
         encode64((char*)output_buf.value,token_buffer,output_buf.length);
         this->spnego_token = new char[strlen(token_buffer)+1];
         strcpy(this->spnego_token, token_buffer);
+        free(token_buffer);
       }
       else {
         if(GSS_ERROR(gss_err)) {

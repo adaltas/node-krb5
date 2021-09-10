@@ -17,10 +17,8 @@ RUN apt-get install -y libkrb5-dev
 ENV NPM_CONFIG_LOGLEVEL info
 RUN git clone https://github.com/tj/n /n
 RUN cd /n && make install
-run n 6.17.1
-run n 8.16.1
-run n 10.16.3
-run n 12.10.0
+RUN n 14
+RUN n 16
 
 RUN mkdir -p /node-krb5
 COPY ./run.sh /run.sh

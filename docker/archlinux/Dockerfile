@@ -21,6 +21,7 @@ RUN n 6.17.1
 RUN n 8.16.1
 RUN n 10.16.3
 RUN n 12.10.0
+RUN n 16.9.0
 
 RUN mkdir -p /node-krb5
 COPY ./run.sh /run.sh

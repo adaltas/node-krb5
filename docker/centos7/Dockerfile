@@ -3,11 +3,14 @@ FROM centos:7
 # Install epel (requirement for service nginx)
 RUN yum install -y epel-release
 
+RUN yum install -y centos-release-scl
+RUN yum install -y devtoolset-10-gcc-c++
+
 # Install misc
 RUN yum install -y wget git vim sudo make
 
 # Install compilation tools
-RUN yum install -y python2 gcc-c++ make
+RUN yum install -y python2 make
 
 # Install Kerberos libs
 RUN yum install -y krb5-devel

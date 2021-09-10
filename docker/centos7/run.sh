@@ -6,6 +6,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
+source scl_source enable devtoolset-10 # load environment configuration to use gcc 7
+
 while [ ! -f /tmp/krb5_test/rest_ready ] 
 do
   echo "Waiting for REST server to be ready..."

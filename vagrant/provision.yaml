@@ -1,0 +1,32 @@
+---
+- hosts: '*'
+
+  tasks:
+
+    - name: Install VS 2017 with native workload
+      win_chocolatey:
+        name: "{{ item }}"
+        state: present
+      loop: # Put in a loop otherwise it's run concurrently
+        - visualstudio2017community
+        - visualstudio2017-workload-nativedesktop
+
+    - name: Install dev dependencies
+      win_chocolatey:
+        name:
+        - python
+        - nodejs
+        - git
+        state: present
+    
+    - name: Install MIT Kerberos 4.1
+      win_chocolatey:
+        name: mitkerberos
+        state: present
+        install_args: ADDLOCAL=all
+    
+    - name: Configure npm MSVS
+      win_shell: npm config set msvs_version 2017
+
+    - name: Clone krb5 folder
+      win_shell: git clone https://github.com/adaltas/node-krb5 /node-krb5

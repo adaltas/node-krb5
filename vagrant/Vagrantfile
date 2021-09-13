@@ -1,0 +1,22 @@
+vm_name = "windows-host1"
+
+Vagrant.configure("2") do |config|
+    config.vm.box = "gusztavvargadr/windows-10"
+    config.vm.define vm_name
+    config.vm.network "private_network", ip: "192.168.64.100"
+    config.vm.communicator = "winrm"
+    config.winrm.transport = :plaintext
+
+    config.vm.provider "virtualbox" do |v|
+        v.name = vm_name
+        v.memory = 8192
+        v.cpus = 6
+    end
+      
+    config.vm.provision :ansible do |ansible|
+        ansible.playbook = "provision.yaml"
+        ansible.host_vars = {
+            vm_name => { "ansible_winrm_scheme" => "http" }
+        }
+    end
+  end

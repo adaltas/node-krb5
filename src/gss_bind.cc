@@ -1,9 +1,13 @@
 #include <sys/stat.h>
-#include <math.h>
 #include "gss_bind.h"
 #ifdef __MVS__
 #include "krb5_zos.h"
 #endif
+
+// https://docs.microsoft.com/en-us/troubleshoot/windows-server/group-policy/group-policy-add-maxtokensize-registry-entry
+// Max token size in most recent Microsoft OS is 48 000 before B64
+// the hard limit is set to 65 535 but discouraged because of B64 conversion that is around +30% in size
+#define MAX_AD_TOKEN_SIZE_BEFORE_B64 48000 
 
 static gss_OID_desc _gss_mech_spnego = {6, (void*)"\x2b\x06\x01\x05\x05\x02"}; //Spnego OID: 1.3.6.1.5.5.2
 static const gss_OID GSS_MECH_SPNEGO= &_gss_mech_spnego; //gss_OID == gss_OID_desc*
@@ -13,8 +17,8 @@ bool exists(const char* path){
   return (stat(path, &buffer) == 0);
 }
 
-int get_base64_length(const int raw_length) {
-  return (floor(raw_length / 3) + 1) * 4 + 1;
+uint32_t get_base64_length(const uint32_t raw_length) {
+    return (((4 * raw_length / 3) + 3) & ~3) + 1;
 }
 
 /**
@@ -77,12 +81,15 @@ class Worker_generate_spnego_token : public Napi::AsyncWorker {
                                      NULL);
 
       if(!(GSS_ERROR(gss_err))) {
+        if (output_buf.length > MAX_AD_TOKEN_SIZE_BEFORE_B64) {
+          this->error_msg = "The token returned by GSS is greater than the size allowed by Windows AD";
+          this->spnego_token = NULL;
+          return;
+        }
         const int base64_length = get_base64_length(output_buf.length);
         char* token_buffer = (char*) malloc(base64_length);
-        encode64((char*)output_buf.value,token_buffer,output_buf.length);
-        this->spnego_token = new char[strlen(token_buffer)+1];
-        strcpy(this->spnego_token, token_buffer);
-        free(token_buffer);
+        encode64((char*) output_buf.value, token_buffer, output_buf.length);
+        this->spnego_token = token_buffer;
       }
       else {
         if(GSS_ERROR(gss_err)) {

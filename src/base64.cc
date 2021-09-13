@@ -60,7 +60,7 @@ void encode64 (char *orig, char *dest, int nbcar){
 
 int decode64(char *buffer) {
   int  car;        // caractère du fichier
-  char valcar [4]; // valeur après conversion des caractères
+  char valcar[4] = {0, 0, 0, 0}; // valeur après conversion des caractères
   int  i;          // compteur
   int  posorig;    // position dans la ligne passée en paramètre
   int  posdest;    // position dans la nouvelle ligne générée

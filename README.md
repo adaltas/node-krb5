@@ -34,12 +34,19 @@ To build this module, you need MIT Kerberos library. Refer to the section corres
   brew install krb5
   npm install krb5
   ```
+* Windows
+  ```
+  choco install mitkerberos --install-arguments="ADDLOCAL=all"
+  npm install krb5
+  ```
 
 Python 2 must be available in your path. You can check it by running `python --version`. It should something like "Python 2.7.16". If not, you must ensure that python 2 is used, for by placing back the original path: `PATH="/usr/bin:$PATH" npm install`.
 
 ### Windows
 
-To compile this library in windows, you need a complete visual studio compile chain, please refer to the [node-gyp instructions](https://github.com/nodejs/node-gyp#on-windows). If you have a 32 bit OS, please delete `binding.gyp` and rename `_binding32.gyp` before install.
+To compile this library on windows, you need a complete visual studio compile chain, please refer to the [node-gyp instructions](https://github.com/nodejs/node-gyp#on-windows). If you have a 32 bit OS, please delete `binding.gyp` and rename `_binding32.gyp` before install.
+
+To install the kerberos headers needed for the build, you need to tick the "SDK" options. It is disabled by default.
 
 ### z/OS
 

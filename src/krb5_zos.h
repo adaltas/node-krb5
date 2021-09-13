@@ -2,8 +2,6 @@
 #define KRB5_ZOS_H_
 #include <_Nascii.h>
 
-typedef u_int uint;
-
 class __ae_runmode {
   int mode;
 

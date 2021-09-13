@@ -10,7 +10,7 @@
 class Worker_krb5_build_principal : public Napi::AsyncWorker {
   public:
     Worker_krb5_build_principal(krb5_context ctx,
-                                uint rlen,
+                                uint32_t rlen,
                                 std::string realm,
                                 std::string user,
                                 Napi::Function& callback)
@@ -56,7 +56,7 @@ class Worker_krb5_build_principal : public Napi::AsyncWorker {
 
     // In parameters
     krb5_context context;
-    uint rlen;
+    uint32_t rlen;
     std::string realm;
     std::string user;
 
@@ -72,7 +72,7 @@ Napi::Value _krb5_build_principal(const Napi::CallbackInfo& info) {
   }
 
   krb5_context krb_context = info[0].As<Napi::External<struct _krb5_context>>().Data();
-  uint rlen = info[1].As<Napi::Number>().Uint32Value();
+  uint32_t rlen = info[1].As<Napi::Number>().Uint32Value();
   std::string realm = info[2].As<Napi::String>().Utf8Value();
   std::string user = info[3].As<Napi::String>().Utf8Value();
   Napi::Function callback = info[4].As<Napi::Function>();

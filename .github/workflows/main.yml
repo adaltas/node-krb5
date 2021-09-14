@@ -30,3 +30,26 @@ jobs:
       - name: Build and run tests
         run: cd docker && ./run_tests.sh ${{ matrix.os }}
 
+  build-windows:
+    # The type of runner that the job will run on
+    name: "Windows Latest"
+    runs-on: windows-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Error 3010 means reboot, therefore we ignore it since we only require the headers and libs
+      - name: Install MIT kerberos
+        run: choco install -y --limit-output mitkerberos --ia=ADDLOCAL=all --ignore-package-exit-codes
+        
+      - name: Get MIT Kerberos path
+        run: |
+          $krb_path=(Get-ItemProperty -Path 'HKLM:/SOFTWARE/MIT/Kerberos/SDK/4.1.0').PathName.replace('\', '/')
+          Write-Host "::set-output name=KRB_PATH::$krb_path"
+        id: mit_kerberos
+
+      - name: Build on windows
+        run: npm install
+        env:
+          GYP_DEFINES: KRB_PATH='${{ steps.mit_kerberos.outputs.KRB_PATH }}'

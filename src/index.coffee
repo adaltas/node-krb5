@@ -128,7 +128,7 @@ spnego = (options, callback) ->
   else return callback Error 'Missing option "service_principal" or "hostbased_service"'
 
   k.generate_spnego_token service, input_name_type, options.ccname, (err, token) ->
-    return callback (if err is "" then undefined else Error err), token
+    return callback (if err is "" then undefined else Error err), token?.toString 'base64'
 
 
 module.exports =

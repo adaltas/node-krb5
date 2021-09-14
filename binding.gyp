@@ -4,8 +4,7 @@
         "sources": [
             "./src/module.cc",
             "./src/krb5_bind.cc",
-            "./src/gss_bind.cc",
-            "./src/base64.cc"
+            "./src/gss_bind.cc"
         ],
         'include_dirs': ["<!@(node -p \"require('node-addon-api').include\")"],
         'dependencies': ["<!(node -p \"require('node-addon-api').gyp\")"],

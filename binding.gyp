@@ -16,7 +16,7 @@
                 "OS=='win'",
                 {
                     "variables": {
-                        "KRB_PATH": "/Program Files/MIT/Kerberos"
+                        "KRB_PATH%": "/Program Files/MIT/Kerberos"
                     },
                     "include_dirs": ["<(KRB_PATH)/include", "<(KRB_PATH)/include/gssapi", "src"],
                     "conditions": [

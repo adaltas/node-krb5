@@ -1,6 +1,16 @@
 
 # Changelog
 
+## Trunk
+
+* build: windows now back working
+* doc: update documentation
+* test: update Archlinux dockerfile with new base image
+* test: remove older node versions, new versions are 14 and 16
+* test: update Centos dockerfile with working dev toolchain
+* test: update Rest dockerfile with new repositories
+* test: update all "client" dockerfiles python to python3
+
 ## Version 0.5.4
 
 * package: update adaltas url

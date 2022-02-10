@@ -8,7 +8,7 @@ RUN pacman --noconfirm -Syu
 RUN pacman --noconfirm -S wget git vim sudo 
 
 # Install compilation tools
-RUN pacman --noconfirm -S python2 gcc make
+RUN pacman --noconfirm -S python3 gcc make
 
 # Install Kerberos libs
 RUN pacman --noconfirm -S krb5

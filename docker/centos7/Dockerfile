@@ -10,7 +10,7 @@ RUN yum install -y devtoolset-10-gcc-c++
 RUN yum install -y wget git vim sudo make
 
 # Install compilation tools
-RUN yum install -y python2 make
+RUN yum install -y python3 make
 
 # Install Kerberos libs
 RUN yum install -y krb5-devel

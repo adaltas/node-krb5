@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:bionic
 
 # Update repositories
 RUN apt-get update
@@ -7,8 +7,8 @@ RUN apt-get update
 RUN apt-get install -y wget git vim sudo make
 
 # Install compilation tools
-RUN apt-get install -y python2.7 g++ make
-RUN rm -f /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python
+RUN apt-get install -y python3 g++ make
+#RUN rm -f /usr/bin/python && ln -s /usr/bin/python3 /usr/bin/python
 
 # Install Kerberos libs
 RUN apt-get install -y libkrb5-dev
@@ -23,4 +23,3 @@ RUN n 16
 RUN mkdir -p /node-krb5
 COPY ./run.sh /run.sh
 ENTRYPOINT ["/run.sh"]
-

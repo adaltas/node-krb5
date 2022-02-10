@@ -8,7 +8,7 @@ krb5 is a Node.js native binding for Kerberos. It is a Node.js implementation of
 * **spnego**: generate a SPNEGO token.
 
 It uses the [MIT Kerberos](http://web.mit.edu/kerberos/) native library.  
-[SPNEGO](http://en.wikipedia.org/wiki/SPNEGO) is a GSS mechanism to authenticate through HTML requests.
+[SPNEGO](http://en.wikipedia.org/wiki/SPNEGO) is a GSS mechanism to authenticate through HTTP requests.
 
 ## Installation
 
@@ -40,7 +40,7 @@ To build this module, you need MIT Kerberos library. Refer to the section corres
   npm install krb5
   ```
 
-Python 2 must be available in your path. You can check it by running `python --version`. It should something like "Python 2.7.16". If not, you must ensure that python 2 is used, for by placing back the original path: `PATH="/usr/bin:$PATH" npm install`.
+Python >=3.6 must be available in your path. You can check it by running `python --version`. It should display something like "Python 3.6.15". If not, you must ensure that python 3 is used, for by placing back the original path: `PATH="/usr/bin:$PATH" npm install`.
 
 ### Windows
 
@@ -67,7 +67,7 @@ sudo make install
 The latest version downloaded with `wget` can be found [here](https://web.mit.edu/kerberos/).
 
 
-Compiling from the source of MIT Kerberos requires `python2`, `make`, `gcc` (`g++`), `bison`.
+Compiling from the source of MIT Kerberos requires `python3`, `make`, `gcc` (`g++`), `bison`.
 
 If you want to install MIT Kerberos in another directory (default is "/usr/local"), specify a `--prefix` option to `./configure`.
 
@@ -87,6 +87,12 @@ If kerberos is installed in a directory not included in include and/or library p
 }
 ```
 
+or you can specify the following environment variables to `npm install` command:
+
+```bash
+export CPLUS_INCLUDE_PATH="/path/to/kerberos/include"
+export LIBRARY_PATH="/path/to/kerberos/lib"
+```
 ### Install node-krb5 on z/OS
 
 1. run the following command to install krb5 libraries for z/OS (it requires [curl for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/curl-for-zos) and [gzip for z/OS](https://www.rocketsoftware.com/product-categories/mainframe/gzip-zos))

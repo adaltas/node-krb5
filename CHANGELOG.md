@@ -1,7 +1,7 @@
 
 # Changelog
 
-## Trunk
+## Version 0.5.5
 
 * build: windows now back working
 * doc: update documentation

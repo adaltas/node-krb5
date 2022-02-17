@@ -32,6 +32,8 @@ To build this module, you need MIT Kerberos library. Refer to the section corres
 * MacOS
   ```
   brew install krb5
+  export LDFLAGS="-L/opt/homebrew/opt/krb5/lib"
+  export CPPFLAGS="-I/opt/homebrew/opt/krb5/include"
   npm install krb5
   ```
 * Windows

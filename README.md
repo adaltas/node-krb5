@@ -246,6 +246,7 @@ To test this module locally, run the KDC and REST dockers, and use the correspon
 
 ```bash
 cd docker
+mkdir -p /tmp/krb5_test
 docker-compose up -d kerberos
 docker-compose up -d rest
 sudo mv /etc/krb5.conf /etc/krb5.conf.backup

@@ -38,7 +38,7 @@ describe 'kdestroy', ->
 
   describe 'function with promise', ->
 
-    it 'destroys default credential cache', (done) ->
+    it 'destroys default credential cache', ->
       krb5.kinit
         principal: 'admin'
         password: 'adm1n_p4ssw0rd'
@@ -51,10 +51,8 @@ describe 'kdestroy', ->
         throw Error 'Should not be able to redestroy cache'
       .catch (err) ->
         err.message.should.startWith 'No credentials cache found'
-        done()
-      return
 
-    it 'destroys given credential cache', (done) ->
+    it 'destroys given credential cache', ->
       krb5.kinit
         principal: 'admin'
         password: 'adm1n_p4ssw0rd'
@@ -70,5 +68,3 @@ describe 'kdestroy', ->
         throw Error 'Should not be able to redestroy cache'
       .catch (err) ->
         err.message.should.startWith 'No credentials cache found'
-        done()
-      return

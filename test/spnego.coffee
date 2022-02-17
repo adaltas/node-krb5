@@ -112,7 +112,7 @@ describe 'spnego', ->
 
   describe 'function with promise', ->
     
-    it 'returns SPNEGO token', (done) ->
+    it 'returns SPNEGO token', ->
       krb5.kinit
         principal: 'rest/rest.krb.local'
         keytab: '/tmp/krb5_test/rest.service.keytab'
@@ -131,7 +131,4 @@ describe 'spnego', ->
             Authorization: 'Negotiate ' + token
         , (res) ->
           res.statusCode.should.be.eql(200)
-          done()
         .end()
-      .catch done
-      return

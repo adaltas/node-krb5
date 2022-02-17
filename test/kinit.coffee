@@ -56,13 +56,10 @@ describe 'kinit', ->
 
   describe 'function with promise', ->
 
-    it 'returns default credential cache path (password provided)', (done) ->
+    it 'returns default credential cache path (password provided)', ->
       krb5.kinit
         principal: 'admin'
         password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
       .then (ccname) ->
         ccname.should.startWith('/tmp')
-        done()
-      .catch done
-      return

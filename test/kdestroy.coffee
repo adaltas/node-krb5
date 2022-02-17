@@ -12,7 +12,7 @@ describe 'kdestroy', ->
         realm: 'KRB.LOCAL'
       , (err, ccname) ->
         krb5.kdestroy (err) ->
-          (err is undefined).should.be.true()
+          return done err if err
           krb5.kdestroy (err) ->
             (err is undefined).should.be.false()
             err.message.should.startWith 'No credentials cache found'
@@ -28,7 +28,7 @@ describe 'kdestroy', ->
         krb5.kdestroy
           ccname: '/tmp/customcc'
         , (err) ->
-          (err is undefined).should.be.true()
+          return done err if err
           krb5.kdestroy
             ccname: '/tmp/customcc'
           , (err) ->
@@ -48,7 +48,7 @@ describe 'kdestroy', ->
       .then ->
         krb5.kdestroy()
       .then ->
-        done Error 'Should not be able to redestroy cache'
+        throw Error 'Should not be able to redestroy cache'
       .catch (err) ->
         err.message.should.startWith 'No credentials cache found'
         done()
@@ -67,7 +67,7 @@ describe 'kdestroy', ->
         krb5.kdestroy
           ccname: "/tmp/customcc"
       .then ->
-        done Error 'Should not be able to redestroy cache'
+        throw Error 'Should not be able to redestroy cache'
       .catch (err) ->
         err.message.should.startWith 'No credentials cache found'
         done()

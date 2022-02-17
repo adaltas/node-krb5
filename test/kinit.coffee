@@ -10,7 +10,7 @@ describe 'kinit', ->
         password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
       , (err, ccname) ->
-        (err is undefined).should.be.true()
+        return done err if err
         ccname.should.startWith('/tmp')
         done()
 
@@ -19,7 +19,7 @@ describe 'kinit', ->
         principal: 'admin'
         password: 'adm1n_p4ssw0rd'
       , (err, ccname) ->
-        (err is undefined).should.be.true()
+        return done err if err
         ccname.should.startWith('/tmp')
         done err
 
@@ -29,7 +29,7 @@ describe 'kinit', ->
         password: 'adm1n_p4ssw0rd'
         realm: 'to_override'
       , (err, ccname) ->
-        (err is undefined).should.be.true()
+        return done err if err
         ccname.should.startWith('/tmp')
         done err
 
@@ -39,7 +39,7 @@ describe 'kinit', ->
         keytab: '/tmp/krb5_test/rest.service.keytab'
         realm: 'KRB.LOCAL'
       , (err, ccname) ->
-        (err is undefined).should.be.true()
+        return done err if err
         ccname.should.startWith('/tmp')
         done()
 
@@ -50,7 +50,7 @@ describe 'kinit', ->
         realm: 'KRB.LOCAL'
         ccname: '/tmp/customcc'
       , (err, ccname) ->
-        (err is undefined).should.be.true()
+        return done err if err
         ccname.should.be.eql('/tmp/customcc')
         done()
 

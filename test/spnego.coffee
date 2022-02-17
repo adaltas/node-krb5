@@ -25,9 +25,8 @@ describe 'spnego', ->
         krb5.spnego
           hostbased_service: 'HTTP@rest.krb.local'
         , (err, token) ->
-          (err is undefined).should.be.true()
+          return done err if err
           token.should.be.String()
-
           http.request
             hostname: 'rest.krb.local'
             port: 8080
@@ -49,9 +48,8 @@ describe 'spnego', ->
         krb5.spnego
           service_principal: 'HTTP/rest.krb.local@KRB.LOCAL'
         , (err, token) ->
-          (err is undefined).should.be.true()
+          return done err if err
           token.should.be.String()
-
           http.request
             hostname: 'rest.krb.local'
             port: 8080
@@ -73,9 +71,8 @@ describe 'spnego', ->
         krb5.spnego
           service_fqdn: 'rest.krb.local'
         , (err, token) ->
-          (err is undefined).should.be.true()
+          return done err if err
           token.should.be.String()
-
           http.request
             hostname: 'rest.krb.local'
             port: 8080
@@ -99,9 +96,8 @@ describe 'spnego', ->
           hostbased_service: 'HTTP@rest.krb.local'
           ccname: '/tmp/customcc'
         , (err, token) ->
-          (err is undefined).should.be.true()
+          return done err if err
           token.should.be.String()
-
           http.request
             hostname: 'rest.krb.local'
             port: 8080
@@ -126,7 +122,6 @@ describe 'spnego', ->
           hostbased_service: 'HTTP@rest.krb.local'
       .then (token) ->
         token.should.be.String()
-
         http.request
           hostname: 'rest.krb.local'
           port: 8080

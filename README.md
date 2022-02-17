@@ -250,5 +250,5 @@ docker-compose up -d kerberos
 docker-compose up -d rest
 sudo mv /etc/krb5.conf /etc/krb5.conf.backup
 sudo cp /tmp/krb5_test/krb5.conf /etc/krb5.conf
-sudo npm test
+npm test
 ```

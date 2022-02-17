@@ -7,6 +7,9 @@ services:
       - /dev/urandom:/dev/random
       - /tmp/krb5_test:/tmp/krb5_test
     hostname: kdc.krb.local
+    ports:
+      - 8088:88
+      - 8749:749
     environment:
       BOOTSTRAP: 1
   rest:
@@ -17,6 +20,8 @@ services:
       - kerberos
     links:
       - "kerberos:kdc.krb.local"
+    ports:
+      - 8080:8080
     volumes:
       - ../src:/node-krb5/src
       - ../lib:/node-krb5/lib
@@ -76,5 +81,3 @@ services:
       - ../binding.gyp:/node-krb5/binding.gyp
       - ../install_krb5.sh:/node-krb5/install_krb5.sh
       - /tmp/krb5_test:/tmp/krb5_test
-
-

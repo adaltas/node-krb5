@@ -1,0 +1,9 @@
+[workspace]
+members = ["crates/krb5_sys", "crates/krb5_rs", "crates/krb5_js"]
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[profile.release]
+lto = true
+opt-level = 3
+codegen-units = 1

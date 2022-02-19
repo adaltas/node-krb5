@@ -3,21 +3,18 @@
   "version": "0.5.4",
   "description": "Kerberos library bindings for Node.js",
   "main": "./lib/index.js",
-  "dependencies": {
-    "bindings": "1.5.0",
-    "node-addon-api": "1.7.1"
-  },
   "devDependencies": {
     "coffeescript": "2.4.1",
     "mocha": "6.2.2",
-    "should": "13.2.3"
+    "should": "13.2.3",
+    "@napi-rs/cli": "^2.0.0"
   },
-  "gypfile": true,
   "author": "Xavier Hermand <xavier@adaltas.com> (https://www.adaltas.com)",
   "contributors": [
     "David Worms <david@adaltas.com> (https://www.adaltas.com)",
     "Pierre Sauvage <pierre@adaltas.com> (https://www.adaltas.com)",
-    "Xavier Hermand <xavier@adaltas.com> (https://www.adaltas.com)"
+    "Xavier Hermand <xavier@adaltas.com> (https://www.adaltas.com)",
+    "Guillaume Boutry <guillaume@adaltas.com> (https://www.adaltas.com)"
   ],
   "license": "BSD-3-Clause",
   "keywords": [
@@ -31,6 +28,11 @@
     "type": "git",
     "url": "https://github.com/adaltas/node-krb5"
   },
+  "napi": {
+    "triples": {
+      "defaults": true
+    }
+  },
   "scripts": {
     "preversion": "grep '## Trunk' CHANGELOG.md",
     "version": "version=`grep '^  \"version\": ' package.json | sed 's/.*\"\\([0-9\\.]*\\)\".*/\\1/'` && sed -i \"s/## Trunk/## Version $version/\" CHANGELOG.md && git add CHANGELOG.md",
@@ -39,10 +41,13 @@
     "minor": "npm version minor -m 'Bump to version %s'",
     "major": "npm version major -m 'Bump to version %s'",
     "coffee": "coffee -b -o lib src",
-    "rebuild": "node-gyp rebuild",
     "test": "mocha test/*.coffee",
-    "install": "node-gyp rebuild",
     "krb5-lib": "./install_krb5.sh",
-    "krb5-lib-zos": "./install_krb5_zos.sh"
+    "krb5-lib-zos": "./install_krb5_zos.sh",
+    "build": "napi build --cargo-name krb5_js ./lib",
+    "build-debug": "npm run build --",
+    "build-release": "npm run build -- --release",
+    "install": "npm run build-release",
+    "r_test": "cargo test"
   }
 }

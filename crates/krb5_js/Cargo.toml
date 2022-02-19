@@ -1,0 +1,27 @@
+[package]
+name = "krb5-js"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[build-dependencies]
+napi-build = "1"
+
+[dependencies]
+krb5-rs = { path = "../krb5_rs" }
+thiserror = "1"
+napi = { version = "2", default-features = false, features = [
+    "async",
+    "napi6",
+    "tokio_rt",
+    "serde-json",
+] }
+napi-derive = "2"
+serde = { version = "1", features = ["derive"] }
+base64 = "0.13"
+regex = "1"
+lazy_static = "1.4"

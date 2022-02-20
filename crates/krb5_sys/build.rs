@@ -6,31 +6,31 @@ use winreg::enums::*;
 use winreg::RegKey;
 
 #[cfg(target_os = "windows")]
-fn link_library() -> Vec<String> {
+fn link_library() -> Vec<PathBuf> {
     let krb5_home = env::var("KRB5_HOME");
     let path = match krb5_home {
         Ok(krb5_home) => krb5_home,
         Err(_) => {
             let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
             let mit_kerberos = hklm
-                .open_subkey("SOFTWARE\\MIT\\Kerberos\\SDK\\4.1.0")
+                .open_subkey(r"SOFTWARE\MIT\Kerberos\SDK\4.1.0")
                 .expect("Failed to find MIT Kerberos in WinRegistry");
             mit_kerberos
                 .get_value("PathName")
                 .expect("Failed to find MIT Kerberos path in WinRegistry")
         }
     };
-    println!("cargo:rustc-link-search=native={}\\lib\\amd64\\", path);
+    println!(r"cargo:rustc-link-search=native={}\lib\amd64\", path);
     println!("cargo:rustc-link-lib=dylib=krb5_64");
     println!("cargo:rustc-link-lib=dylib=gssapi64");
     vec![
-        String::new() + &path + "\\include",
-        String::new() + &path + "\\include\\gssapi",
+        [&path, r"include"].iter().collect::<PathBuf>(),
+        [&path, r"include\gssapi"].iter().collect::<PathBuf>(),
     ]
 }
 
-#[cfg(target_os = "linux")]
-fn link_library() -> Vec<String> {
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn link_library() -> Vec<PathBuf> {
     let krb5_home = env::var("KRB5_HOME");
     if let Ok(krb5_home) = krb5_home {
         let path: PathBuf = [&krb5_home, "lib", "pkgconfig"].iter().collect();
@@ -38,17 +38,20 @@ fn link_library() -> Vec<String> {
             env::set_var("PKG_CONFIG_PATH", path);
         }
     }
-
-    pkg_config::Config::new()
+    let krb5 = pkg_config::Config::new()
         .atleast_version("1.16.1")
         .probe("mit-krb5")
         .expect("Failed to bind libkrb5");
 
-    pkg_config::Config::new()
+    let gssapi = pkg_config::Config::new()
         .atleast_version("1.16.1")
         .probe("mit-krb5-gssapi")
         .expect("Failed to bind libgssapi_krb5");
-    Vec::new()
+
+    let mut include_dirs = Vec::new();
+    include_dirs.extend(krb5.include_paths);
+    include_dirs.extend(gssapi.include_paths);
+    include_dirs
 }
 
 fn main() {
@@ -99,7 +102,7 @@ fn main() {
         .clang_args(
             include_dirs
                 .iter()
-                .map(|include_dir| String::from("-I") + include_dir)
+                .map(|include_dir| String::from("-I") + include_dir.to_str().unwrap())
                 .collect::<Vec<String>>(),
         )
         // Tell cargo to invalidate the built crate whenever any of the

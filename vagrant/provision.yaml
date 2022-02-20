@@ -14,9 +14,11 @@
     - name: Install dev dependencies
       win_chocolatey:
         name:
-        - python
-        - nodejs
+        - llvm
+        - rustup.install
         - git
+        - nodejs
+        - python
         state: present
     
     - name: Install MIT Kerberos 4.1

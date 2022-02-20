@@ -24,8 +24,8 @@ fn link_library() -> Vec<String> {
     println!("cargo:rustc-link-lib=dylib=krb5_64");
     println!("cargo:rustc-link-lib=dylib=gssapi64");
     vec![
-        String::from("-I") + &path + "\\include",
-        String::from("-I") + &path + "\\include\\gssapi",
+        String::new() + &path + "\\include",
+        String::new() + &path + "\\include\\gssapi",
     ]
 }
 
@@ -53,7 +53,7 @@ fn link_library() -> Vec<String> {
 
 fn main() {
     println!("cargo:rerun-if-env-changed=KRB5_HOME");
-    let clang_args = link_library();
+    let include_dirs = link_library();
 
     println!("cargo:rerun-if-changed=src/wrapper.h");
 
@@ -90,13 +90,18 @@ fn main() {
         .allowlist_function("gss_display_status")
         .allowlist_function("gss_release_buffer")
         .allowlist_function("gss_error")
-        .allowlist_var("GSS_C_NT_USER_NAME")
-        .allowlist_var("GSS_C_NT_HOSTBASED_SERVICE")
+        .allowlist_function("gss_c_nt_user_name")
+        .allowlist_function("gss_c_nt_hostbased_service")
         .allowlist_type("gss_int32")
         .allowlist_var("GSS_C_NO_CREDENTIAL")
         .allowlist_var("GSS_C_NO_CHANNEL_BINDINGS")
         .allowlist_var("GSS_C_NO_CONTEXT")
-        .clang_args(clang_args)
+        .clang_args(
+            include_dirs
+                .iter()
+                .map(|include_dir| String::from("-I") + include_dir)
+                .collect::<Vec<String>>(),
+        )
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
@@ -112,7 +117,9 @@ fn main() {
         .expect("Couldn't write bindings!");
 
     println!("cargo:rerun-if-changed=src/wrapper.c");
-    let mut config = cc::Build::new();
-    config.include("src").file("src/wrapper.c");
-    config.compile("gssapi_wrapper");
+    cc::Build::new()
+        .includes(include_dirs)
+        .include("src")
+        .file("src/wrapper.c")
+        .compile("gssapi_wrapper");
 }

@@ -5,11 +5,10 @@ use std::{
 };
 
 use krb5_sys::{
-    gss_OID, gss_OID_desc, gss_buffer_desc, gss_buffer_desc_struct, gss_delete_sec_context,
-    gss_display_status, gss_error, gss_import_name, gss_init_sec_context, gss_int32,
-    gss_krb5_ccache_name, gss_name_t, gss_release_buffer, gss_release_name, OM_uint32,
-    GSS_C_NO_CHANNEL_BINDINGS, GSS_C_NO_CONTEXT, GSS_C_NO_CREDENTIAL, GSS_C_NT_HOSTBASED_SERVICE,
-    GSS_C_NT_USER_NAME,
+    gss_OID, gss_OID_desc, gss_buffer_desc, gss_buffer_desc_struct, gss_c_nt_hostbased_service,
+    gss_c_nt_user_name, gss_delete_sec_context, gss_display_status, gss_error, gss_import_name,
+    gss_init_sec_context, gss_int32, gss_krb5_ccache_name, gss_name_t, gss_release_buffer,
+    gss_release_name, OM_uint32, GSS_C_NO_CHANNEL_BINDINGS, GSS_C_NO_CONTEXT, GSS_C_NO_CREDENTIAL,
 };
 
 const MAX_AD_TOKEN_SIZE_BEFORE_B64: u64 = 48000;
@@ -39,9 +38,9 @@ pub fn import_name(principal: &str, input_name_type: &str) -> Result<Name, Strin
     };
     let gss_oid = unsafe {
         if input_name_type == "GSS_C_NT_USER_NAME" {
-            GSS_C_NT_USER_NAME
+            gss_c_nt_user_name()
         } else {
-            GSS_C_NT_HOSTBASED_SERVICE
+            gss_c_nt_hostbased_service()
         }
     };
     let mut desired_name: MaybeUninit<gss_name_t> = MaybeUninit::uninit();

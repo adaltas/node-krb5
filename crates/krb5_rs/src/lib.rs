@@ -18,15 +18,14 @@ pub use ccache::*;
 
 pub mod gssapi;
 
-
 #[cfg(test)]
 mod test {
     use super::CCache;
     use super::Context;
     use super::Credentials;
+    use super::Krb5Error;
     use super::Principal;
     use super::Result;
-    use super::Krb5Error;
 
     #[test]
     fn test_init() -> Result<()> {
@@ -80,17 +79,22 @@ mod test {
         match ccache.destroy() {
             Err(Krb5Error::LibraryError(_)) => assert!(true),
             Ok(_) => assert!(false, "Shouldn't be able to destroy a non-existing ccache"),
-            _ => assert!(false, "Destroy a non-existing ccache should trigger a `Krb5Error::LibraryError`")
+            _ => assert!(
+                false,
+                "Destroy a non-existing ccache should trigger a `Krb5Error::LibraryError`"
+            ),
         }
     }
 
     #[test]
     fn test_store_creds_then_destroy() -> Result<()> {
         let context = Context::new()?;
-        let principal = Principal::build_principal(&context, &context.get_default_realm()?, "admin")?;
+        let principal =
+            Principal::build_principal(&context, &context.get_default_realm()?, "admin")?;
         let ccache = CCache::default(&context)?;
         ccache.initialize(&principal)?;
-        let credentials = Credentials::get_init_credentials_password(&context, &principal, "adm1n_p4ssw0rd")?;
+        let credentials =
+            Credentials::get_init_credentials_password(&context, &principal, "adm1n_p4ssw0rd")?;
         ccache.store_creds(credentials)?;
         ccache.destroy()?;
         Ok(())

@@ -14,7 +14,7 @@ pub enum Krb5Error {
     #[error("Invalid principal")]
     InvalidPrincipal,
     #[error("Failed to initialize context")]
-    ContextInitializationError
+    ContextInitializationError,
 }
 
 impl Krb5Error {
@@ -22,7 +22,10 @@ impl Krb5Error {
         Krb5Error::LibraryError(context.get_error_message(error_code))
     }
 
-    pub(crate) fn exit_if_library_error(context: &Context, error_code: krb5_error_code) -> Result<()> {
+    pub(crate) fn exit_if_library_error(
+        context: &Context,
+        error_code: krb5_error_code,
+    ) -> Result<()> {
         if error_code != 0 {
             Err(Krb5Error::from_library_error(context, error_code))
         } else {

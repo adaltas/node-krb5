@@ -33,6 +33,9 @@
       "defaults": true
     }
   },
+  "engines": {
+    "node": ">= 14"
+  },
   "scripts": {
     "preversion": "grep '## Trunk' CHANGELOG.md",
     "version": "version=`grep '^  \"version\": ' package.json | sed 's/.*\"\\([0-9\\.]*\\)\".*/\\1/'` && sed -i \"s/## Trunk/## Version $version/\" CHANGELOG.md && git add CHANGELOG.md",
@@ -42,12 +45,11 @@
     "major": "npm version major -m 'Bump to version %s'",
     "coffee": "coffee -b -o lib src",
     "test": "mocha test/*.coffee",
+    "test_rs": "cargo test",
+    "local_test": "$SHELL test/local_test.sh",
     "krb5-lib": "./install_krb5.sh",
-    "krb5-lib-zos": "./install_krb5_zos.sh",
     "build": "napi build --cargo-name krb5_js ./lib",
-    "build-debug": "npm run build --",
-    "build-release": "npm run build -- --release",
-    "install": "npm run build-release",
-    "r_test": "cargo test"
+    "build-release": "npm run build -- --release --strip",
+    "install": "npm run build-release"
   }
 }

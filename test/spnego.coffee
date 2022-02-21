@@ -1,13 +1,18 @@
 krb5 = require '../lib/'
 http = require 'http'
 
+ccacheStartName = process.env.DEFAULT_CCACHE_LOCATION || '/tmp'
+customcc = ccacheStartName + "/customcc"
+restKeytab = process.env.REST_KEYTAB || '/tmp/krb5_test/rest.service.keytab'
+hostname = process.env.REST_ADDRESS || 'rest.krb.local'
+
 describe 'spnego', ->
 
   describe 'function with callback', ->
     
     it 'checks that server requires authentication', (done) ->
       http.request
-        hostname: 'rest.krb.local'
+        hostname: hostname
         port: 8080
         path: '/'
         method: 'GET'
@@ -19,7 +24,7 @@ describe 'spnego', ->
     it 'authenticates to REST server with SPNEGO token (hostbased service)', (done) ->
       krb5.kinit
         principal: 'rest/rest.krb.local'
-        keytab: 'FILE:/tmp/krb5_test/rest.service.keytab'
+        keytab: 'FILE:' + restKeytab
         realm: 'KRB.LOCAL'
       , (err, ccname) ->
         krb5.spnego
@@ -28,7 +33,7 @@ describe 'spnego', ->
           return done err if err
           token.should.be.String()
           http.request
-            hostname: 'rest.krb.local'
+            hostname: hostname
             port: 8080
             path: '/'
             method: 'GET'
@@ -42,7 +47,7 @@ describe 'spnego', ->
     it 'authenticates to REST server with SPNEGO token (service principal)', (done) ->
       krb5.kinit
         principal: 'rest/rest.krb.local'
-        keytab: 'FILE:/tmp/krb5_test/rest.service.keytab'
+        keytab: 'FILE:' + restKeytab
         realm: 'KRB.LOCAL'
       , (err, ccname) ->
         krb5.spnego
@@ -51,7 +56,7 @@ describe 'spnego', ->
           return done err if err
           token.should.be.String()
           http.request
-            hostname: 'rest.krb.local'
+            hostname: hostname
             port: 8080
             path: '/'
             method: 'GET'
@@ -65,7 +70,7 @@ describe 'spnego', ->
     it 'authenticates to REST server with SPNEGO token (service fqdn)', (done) ->
       krb5.kinit
         principal: 'rest/rest.krb.local'
-        keytab: 'FILE:/tmp/krb5_test/rest.service.keytab'
+        keytab: 'FILE:' + restKeytab
         realm: 'KRB.LOCAL'
       , (err, ccname) ->
         krb5.spnego
@@ -74,7 +79,7 @@ describe 'spnego', ->
           return done err if err
           token.should.be.String()
           http.request
-            hostname: 'rest.krb.local'
+            hostname: hostname
             port: 8080
             path: '/'
             method: 'GET'
@@ -90,16 +95,16 @@ describe 'spnego', ->
         principal: 'admin'
         password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
-        ccname: '/tmp/customcc'
+        ccname: customcc
       , (err, ccname) ->
         krb5.spnego
           hostbased_service: 'HTTP@rest.krb.local'
-          ccname: '/tmp/customcc'
+          ccname: customcc
         , (err, token) ->
           return done err if err
           token.should.be.String()
           http.request
-            hostname: 'rest.krb.local'
+            hostname: hostname
             port: 8080
             path: '/'
             method: 'GET'
@@ -115,7 +120,7 @@ describe 'spnego', ->
     it 'returns SPNEGO token', ->
       krb5.kinit
         principal: 'rest/rest.krb.local'
-        keytab: '/tmp/krb5_test/rest.service.keytab'
+        keytab: restKeytab
         realm: 'KRB.LOCAL'
       .then (ccname) ->
         krb5.spnego
@@ -123,7 +128,7 @@ describe 'spnego', ->
       .then (token) ->
         token.should.be.String()
         http.request
-          hostname: 'rest.krb.local'
+          hostname: hostname
           port: 8080
           path: '/'
           method: 'GET'

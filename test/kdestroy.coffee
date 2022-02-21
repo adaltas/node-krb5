@@ -1,5 +1,8 @@
 krb5 = require '../lib/'
 
+ccacheStartName = process.env.DEFAULT_CCACHE_LOCATION || '/tmp'
+customcc = ccacheStartName + "/customcc"
+restKeytab = process.env.REST_KEYTAB || '/tmp/krb5_test/rest.service.keytab'
 
 describe 'kdestroy', ->
 

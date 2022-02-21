@@ -3,10 +3,14 @@ import http.server
 import base64
 import socket
 import gssapi
+import sys
 
-FQDN = socket.getfqdn()
+if len(sys.argv) == 2 and sys.argv[1] == "-local":
+    FQDN = "rest.krb.local"
+    print("Local mode, FQDN forced")
+else:
+    FQDN = socket.getfqdn()
 print('FQDN: %s' % FQDN)
-
 princ_name = "HTTP/%s@%s" % (FQDN, 'KRB.LOCAL')
 server_name = gssapi.Name(
     'HTTP@' + FQDN, name_type=gssapi.NameType.hostbased_service)

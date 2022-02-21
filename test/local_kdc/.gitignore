@@ -1,0 +1,5 @@
+*
+!.gitignore
+!conf.sh
+!start_kdc.sh
+!stop_kdc.sh

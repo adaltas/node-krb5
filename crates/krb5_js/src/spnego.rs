@@ -22,15 +22,13 @@ pub struct GenerateSpnegoTokenParameters {
 }
 
 pub fn generate_spnego_token_function(
-    options: &mut GenerateSpnegoTokenParameters,
-) -> std::result::Result<String, String> {
-    let GenerateSpnegoTokenParameters {
+    GenerateSpnegoTokenParameters {
         service_principal,
         service_fqdn,
         hostbased_service,
         ccname,
-    } = options;
-
+    }: &mut GenerateSpnegoTokenParameters,
+) -> std::result::Result<String, String> {
     let (service_principal, input_name_type) = if let Some(service) = service_principal {
         (service.to_owned(), "GSS_C_NT_USER_NAME")
     } else {

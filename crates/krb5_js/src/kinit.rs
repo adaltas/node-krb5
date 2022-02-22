@@ -17,14 +17,15 @@ pub struct KinitParameters {
     pub ccname: Option<String>,
 }
 
-pub fn kinit_function(parameters: &mut KinitParameters) -> Result<String, Error> {
-    let KinitParameters {
+pub fn kinit_function(
+    KinitParameters {
         principal,
         password,
         keytab,
         realm,
         ccname,
-    } = parameters;
+    }: &mut KinitParameters,
+) -> Result<String, Error> {
     if password.is_none() && keytab.is_none() {
         return Err(Error::MissingPasswordOrKeytab);
     }

@@ -14,7 +14,7 @@ pub fn kinit(input: KinitParameters) -> AsyncTask<Kinit> {
     AsyncTask::new(Kinit { input })
 }
 
-#[napi(ts_return_type="Promise<void>")]
+#[napi(ts_return_type = "Promise<void>")]
 pub fn kdestroy(input: KdestroyParameters) -> AsyncTask<Kdestroy> {
     AsyncTask::new(Kdestroy { input })
 }

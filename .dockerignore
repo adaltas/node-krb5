@@ -1,0 +1,10 @@
+*
+!docker/**/run.sh
+!crates/
+!lib/
+lib/index.node
+!src/
+!test/
+!Cargo.*
+!package*
+!install_krb5.sh

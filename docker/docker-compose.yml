@@ -23,15 +23,12 @@ services:
     ports:
       - 8080:8080
     volumes:
-      - ../src:/node-krb5/src
-      - ../lib:/node-krb5/lib
-      - ../test:/node-krb5/test
-      - ../package.json:/node-krb5/package.json
-      - ../binding.gyp:/node-krb5/binding.gyp
-      - ../install_krb5.sh:/node-krb5/install_krb5.sh
+      - ../src/server.py:/node-krb5/src/server.py
       - /tmp/krb5_test:/tmp/krb5_test
   archlinux:
-    build: ./archlinux
+    build: 
+      context: ../
+      dockerfile: docker/archlinux/Dockerfile
     image: krb5_archlinux
     depends_on:
       - kerberos
@@ -40,15 +37,11 @@ services:
       - "kerberos:kdc.krb.local"
       - "rest:rest.krb.local"
     volumes:
-      - ../src:/node-krb5/src
-      - ../lib:/node-krb5/lib
-      - ../test:/node-krb5/test
-      - ../package.json:/node-krb5/package.json
-      - ../binding.gyp:/node-krb5/binding.gyp
-      - ../install_krb5.sh:/node-krb5/install_krb5.sh
       - /tmp/krb5_test:/tmp/krb5_test
   centos7:
-    build: ./centos7
+    build: 
+      context: ../
+      dockerfile: docker/centos7/Dockerfile
     image: krb5_centos7
     depends_on:
       - kerberos
@@ -57,15 +50,11 @@ services:
       - "kerberos:kdc.krb.local"
       - "rest:rest.krb.local"
     volumes:
-      - ../src:/node-krb5/src
-      - ../lib:/node-krb5/lib
-      - ../test:/node-krb5/test
-      - ../package.json:/node-krb5/package.json
-      - ../binding.gyp:/node-krb5/binding.gyp
-      - ../install_krb5.sh:/node-krb5/install_krb5.sh
       - /tmp/krb5_test:/tmp/krb5_test
   ubuntu:
-    build: ./ubuntu
+    build: 
+      context: ../
+      dockerfile: docker/ubuntu/Dockerfile
     image: krb5_ubuntu
     depends_on:
       - kerberos
@@ -74,10 +63,17 @@ services:
       - "kerberos:kdc.krb.local"
       - "rest:rest.krb.local"
     volumes:
-      - ../src:/node-krb5/src
-      - ../lib:/node-krb5/lib
-      - ../test:/node-krb5/test
-      - ../package.json:/node-krb5/package.json
-      - ../binding.gyp:/node-krb5/binding.gyp
-      - ../install_krb5.sh:/node-krb5/install_krb5.sh
+      - /tmp/krb5_test:/tmp/krb5_test
+  ubuntu-vendored:
+    build: 
+      context: ../
+      dockerfile: docker/ubuntu-vendored/Dockerfile
+    image: krb5_ubuntu_vendored
+    depends_on:
+      - kerberos
+      - rest
+    links:
+      - "kerberos:kdc.krb.local"
+      - "rest:rest.krb.local"
+    volumes:
       - /tmp/krb5_test:/tmp/krb5_test

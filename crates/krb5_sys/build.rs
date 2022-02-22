@@ -39,12 +39,12 @@ fn link_library() -> Vec<PathBuf> {
         }
     }
     let krb5 = pkg_config::Config::new()
-        .atleast_version("1.16.1")
+        .atleast_version("1.15")
         .probe("mit-krb5")
         .expect("Failed to bind libkrb5");
 
     let gssapi = pkg_config::Config::new()
-        .atleast_version("1.16.1")
+        .atleast_version("1.15")
         .probe("mit-krb5-gssapi")
         .expect("Failed to bind libgssapi_krb5");
 

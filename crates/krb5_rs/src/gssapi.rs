@@ -58,7 +58,7 @@ pub fn import_name(principal: &str, input_name_type: &str) -> Result<Name, Strin
 pub fn krb5_ccache_name(ccache_name: &str) -> Result<(), String> {
     let mut minor = 0;
     let ccache_name =
-        CString::new(ccache_name).map_err(|_err| "Failed to convert ccache name to a c string")?;
+        CString::new(ccache_name).map_err(|_| "Failed to convert ccache name to a c string")?;
 
     let error_code =
         unsafe { gss_krb5_ccache_name(&mut minor, ccache_name.as_ptr(), std::ptr::null_mut()) };

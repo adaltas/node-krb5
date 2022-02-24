@@ -14,7 +14,7 @@ pub struct Keytab<'a> {
 impl<'a> Keytab<'a> {
     pub fn resolve(context: &'a Context, name: &str) -> Result<Keytab<'a>> {
         let mut keytab: MaybeUninit<krb5_keytab> = MaybeUninit::uninit();
-        let name = CString::new(name).unwrap();
+        let name = CString::new(name).map_err(|_| Krb5Error::StringConversionError)?;
         let error_code =
             unsafe { krb5_kt_resolve(context.inner, name.as_ptr(), keytab.as_mut_ptr()) };
         Krb5Error::exit_if_library_error(context, error_code)?;

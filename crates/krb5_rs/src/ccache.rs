@@ -30,7 +30,7 @@ impl<'a> CCache<'a> {
     pub fn resolve(context: &'a Context, cc_name: &str) -> Result<CCache<'a>> {
         let mut ccache: MaybeUninit<krb5_ccache> = MaybeUninit::uninit();
 
-        let cc_name = CString::new(cc_name).unwrap();
+        let cc_name = CString::new(cc_name).map_err(|_| Krb5Error::StringConversionError)?;
 
         let error_code =
             unsafe { krb5_cc_resolve(context.inner, cc_name.as_ptr(), ccache.as_mut_ptr()) };

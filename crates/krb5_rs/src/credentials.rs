@@ -18,7 +18,7 @@ impl<'a> Credentials<'a> {
         password: &str,
     ) -> Result<Credentials<'a>> {
         let mut credentials: MaybeUninit<krb5_creds> = MaybeUninit::uninit();
-        let password = CString::new(password).map_err(|_err| Krb5Error::StringConversionError)?;
+        let password = CString::new(password).map_err(|_| Krb5Error::StringConversionError)?;
         let error_code = unsafe {
             krb5_get_init_creds_password(
                 context.inner,

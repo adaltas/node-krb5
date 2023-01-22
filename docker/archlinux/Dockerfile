@@ -1,14 +1,13 @@
 FROM archlinux/archlinux:base
 
-# Update repositories
-RUN echo "Server = http://mirror.aarnet.edu.au/pub/archlinux/$repo/os/$arch" >> /etc/pacman.d/mirrorlist
 RUN pacman --noconfirm -Syu
 
 # Install misc
-RUN pacman --noconfirm -S wget git vim sudo 
+RUN pacman --noconfirm -S wget git python3 make clang pkg-config
 
-# Install compilation tools
-RUN pacman --noconfirm -S python3 gcc make
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y --profile minimal
+
+RUN echo 'source $HOME/.cargo/env' >> /etc/profile
 
 # Install Kerberos libs
 RUN pacman --noconfirm -S krb5
@@ -21,5 +20,10 @@ RUN n 14
 RUN n 16
 
 RUN mkdir -p /node-krb5
-COPY ./run.sh /run.sh
+WORKDIR /node-krb5
+
+COPY . .
+
+# Context is node-krb5 folder
+COPY docker/archlinux/run.sh /run.sh
 ENTRYPOINT ["/run.sh"]

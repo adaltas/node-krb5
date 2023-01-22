@@ -1,5 +1,9 @@
 krb5 = require '../lib/'
 
+ccacheStartName = process.env.DEFAULT_CCACHE_LOCATION || '/tmp'
+customcc = ccacheStartName + "/customcc"
+restKeytab = process.env.REST_KEYTAB || '/tmp/krb5_test/rest.service.keytab'
+
 describe 'kinit', ->
 
   describe 'function with callback', ->
@@ -11,7 +15,7 @@ describe 'kinit', ->
         realm: 'KRB.LOCAL'
       , (err, ccname) ->
         return done err if err
-        ccname.should.startWith('/tmp')
+        ccname.should.startWith(ccacheStartName)
         done()
 
     it 'returns default credential cache path (password provided using default realm)', (done) ->
@@ -20,7 +24,7 @@ describe 'kinit', ->
         password: 'adm1n_p4ssw0rd'
       , (err, ccname) ->
         return done err if err
-        ccname.should.startWith('/tmp')
+        ccname.should.startWith(ccacheStartName)
         done err
 
     it 'returns default credential cache path (password provided using realm in principal)', (done) ->
@@ -30,28 +34,28 @@ describe 'kinit', ->
         realm: 'to_override'
       , (err, ccname) ->
         return done err if err
-        ccname.should.startWith('/tmp')
+        ccname.should.startWith(ccacheStartName)
         done err
 
     it 'returns default credential cache path (keytab provided)', (done) ->
       krb5.kinit
         principal: 'rest/rest.krb.local'
-        keytab: '/tmp/krb5_test/rest.service.keytab'
+        keytab: restKeytab
         realm: 'KRB.LOCAL'
       , (err, ccname) ->
         return done err if err
-        ccname.should.startWith('/tmp')
+        ccname.should.startWith(ccacheStartName)
         done()
 
     it 'returns given credential cache path (keytab provided)', (done) ->
       krb5.kinit
         principal: 'rest/rest.krb.local'
-        keytab: '/tmp/krb5_test/rest.service.keytab'
+        keytab: restKeytab
         realm: 'KRB.LOCAL'
-        ccname: '/tmp/customcc'
+        ccname: customcc
       , (err, ccname) ->
         return done err if err
-        ccname.should.be.eql('/tmp/customcc')
+        ccname.should.be.eql(customcc)
         done()
 
   describe 'function with promise', ->
@@ -62,4 +66,4 @@ describe 'kinit', ->
         password: 'adm1n_p4ssw0rd'
         realm: 'KRB.LOCAL'
       .then (ccname) ->
-        ccname.should.startWith('/tmp')
+        ccname.should.startWith(ccacheStartName)

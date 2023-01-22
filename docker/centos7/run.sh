@@ -6,7 +6,9 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
+source /etc/profile
 source scl_source enable devtoolset-10 # load environment configuration to use gcc 7
+source scl_source enable llvm-toolset-7 # load environment configuration to use clang 5
 
 while [ ! -f /tmp/krb5_test/rest_ready ] 
 do
@@ -18,9 +20,8 @@ cp /tmp/krb5_test/krb5.conf /etc/krb5.conf
 for node_version in "16" "14"; do
   echo "Node.js version "$node_version
   n $node_version
-  # --unsafe-perm allows node-gyp build as root
   # --force forces reinstallation
-  npm install --unsafe-perm --force
+  npm install --force
   npm test
   err=$?
   if [ $err -ne 0 ] 

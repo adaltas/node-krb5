@@ -1,3 +1,4 @@
+use base64::{engine, Engine};
 use krb5_rs::gssapi;
 use napi::{Env, JsString, Task};
 use napi_derive::napi;
@@ -52,7 +53,7 @@ pub fn generate_spnego_token_function(
         gssapi::krb5_ccache_name(ccname.as_ref().unwrap())?;
     }
     let token = gssapi::get_token(target_name)?;
-    Ok(base64::encode(token))
+    Ok(engine::general_purpose::STANDARD.encode(token))
 }
 
 pub struct Spnego {

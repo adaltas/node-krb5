@@ -42,7 +42,7 @@ pub fn kinit_function(
         (principal.as_str(), None)
     };
     let context = Context::new()?;
-    let realm = match realm_from_split.or_else(|| realm.as_deref()) {
+    let realm = match realm_from_split.or(realm.as_deref()) {
         Some(realm) => realm.to_owned(),
         None => context.get_default_realm()?,
     };

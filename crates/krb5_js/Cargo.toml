@@ -16,6 +16,6 @@ krb5-rs = { path = "../krb5_rs" }
 thiserror = "1"
 napi = { version = "2", default-features = false, features = ["napi6"] }
 napi-derive = "2"
-base64 = "0.13"
+base64 = "0.21"
 regex = "1"
 lazy_static = "1.4"

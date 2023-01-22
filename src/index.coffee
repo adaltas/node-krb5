@@ -8,7 +8,6 @@ module.exports =
       .catch (err) -> callback err
     return
 
-
   spnego: (options, callback) ->
     return krb5.spnego options  unless callback
     krb5.spnego options
@@ -22,9 +21,8 @@ module.exports =
     if typeof options is 'function'
       callback = options
       options = {}
-    
+
     krb5.kdestroy options
       .then () -> callback()
       .catch (err) -> callback err
     return
-    

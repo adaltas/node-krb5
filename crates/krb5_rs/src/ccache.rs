@@ -10,13 +10,13 @@ use krb5_sys::{
 
 use super::{Context, Credentials, Krb5Error, Principal, Result};
 
-pub struct CCache<'a> {
-    pub(crate) context: &'a Context,
+pub struct CCache<'context> {
+    pub(crate) context: &'context Context,
     pub(crate) inner: krb5_ccache,
 }
 
-impl<'a> CCache<'a> {
-    pub fn default(context: &'a Context) -> Result<CCache> {
+impl<'context> CCache<'context> {
+    pub fn default(context: &'context Context) -> Result<CCache> {
         let mut ccache: MaybeUninit<krb5_ccache> = MaybeUninit::uninit();
         let error_code = unsafe { krb5_cc_default(context.inner, ccache.as_mut_ptr()) };
         Krb5Error::exit_if_library_error(context, error_code)?;
@@ -27,7 +27,7 @@ impl<'a> CCache<'a> {
         })
     }
 
-    pub fn resolve(context: &'a Context, cc_name: &str) -> Result<CCache<'a>> {
+    pub fn resolve(context: &'context Context, cc_name: &str) -> Result<CCache<'context>> {
         let mut ccache: MaybeUninit<krb5_ccache> = MaybeUninit::uninit();
 
         let cc_name = CString::new(cc_name).map_err(|_| Krb5Error::StringConversionError)?;
@@ -77,7 +77,7 @@ impl<'a> CCache<'a> {
     }
 }
 
-impl<'a> Drop for CCache<'a> {
+impl<'context> Drop for CCache<'context> {
     fn drop(&mut self) {
         if !self.context.inner.is_null() && !self.inner.is_null() {
             unsafe { krb5_cc_close(self.context.inner, self.inner) };

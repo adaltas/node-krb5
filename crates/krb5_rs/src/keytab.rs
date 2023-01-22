@@ -6,13 +6,13 @@ use krb5_sys::{krb5_keytab, krb5_kt_close, krb5_kt_resolve};
 
 use super::Krb5Error;
 
-pub struct Keytab<'a> {
-    pub(crate) context: &'a Context,
+pub struct Keytab<'context> {
+    pub(crate) context: &'context Context,
     pub(crate) inner: krb5_keytab,
 }
 
-impl<'a> Keytab<'a> {
-    pub fn resolve(context: &'a Context, name: &str) -> Result<Keytab<'a>> {
+impl<'context> Keytab<'context> {
+    pub fn resolve(context: &'context Context, name: &str) -> Result<Keytab<'context>> {
         let mut keytab: MaybeUninit<krb5_keytab> = MaybeUninit::uninit();
         let name = CString::new(name).map_err(|_| Krb5Error::StringConversionError)?;
         let error_code =
@@ -25,7 +25,7 @@ impl<'a> Keytab<'a> {
     }
 }
 
-impl<'a> Drop for Keytab<'a> {
+impl<'context> Drop for Keytab<'context> {
     fn drop(&mut self) {
         if !self.context.inner.is_null() && !self.inner.is_null() {
             unsafe { krb5_kt_close(self.context.inner, self.inner) };

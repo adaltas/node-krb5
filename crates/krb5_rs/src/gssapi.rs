@@ -11,7 +11,7 @@ use krb5_sys::{
     gss_release_name, OM_uint32, GSS_C_NO_CHANNEL_BINDINGS, GSS_C_NO_CONTEXT, GSS_C_NO_CREDENTIAL,
 };
 
-const MAX_AD_TOKEN_SIZE_BEFORE_B64: u64 = 48000;
+const MAX_AD_TOKEN_SIZE_BEFORE_B64: usize = 48000;
 
 const GSS_C_REPLAY_FLAG: OM_uint32 = 4;
 const GSS_C_SEQUENCE_FLAG: OM_uint32 = 8;
@@ -33,7 +33,7 @@ impl Drop for Name {
 pub fn import_name(principal: &str, input_name_type: &str) -> Result<Name, String> {
     let mut minor = 0;
     let mut service = gss_buffer_desc {
-        length: principal.len() as u64,
+        length: principal.len(),
         value: principal.as_ptr() as *mut _,
     };
     let gss_oid = unsafe {
@@ -103,8 +103,7 @@ pub fn get_token(target_name: Name) -> Result<Vec<u8>, String> {
                 "The token returned by GSS is greater than the size allowed by Windows AD",
             ))
         } else {
-            // try_into().unwrap() won't fail, because output_token.length cannot be higher than MAX_AD_TOKEN_SIZE_BEFORE_B64
-            let size = output_token.length.try_into().unwrap();
+            let size = output_token.length;
             let mut vec: Vec<u8> = Vec::with_capacity(size);
             unsafe {
                 std::ptr::copy(output_token.value, vec.as_mut_ptr() as *mut _, size);
@@ -148,15 +147,8 @@ fn convert_gss_error(error_code: OM_uint32, minor: OM_uint32) -> String {
                 &mut status_string,
             )
         };
-        let slice_from_data: &[u8] = unsafe {
-            slice::from_raw_parts(
-                status_string.value as *mut _,
-                status_string
-                    .length
-                    .try_into()
-                    .expect("Failed to convert status_string.length to usize"),
-            )
-        };
+        let slice_from_data: &[u8] =
+            unsafe { slice::from_raw_parts(status_string.value as *mut _, status_string.length) };
         error_msg.extend_from_slice(slice_from_data);
         unsafe { gss_release_buffer(&mut min_status, &mut status_string) };
 

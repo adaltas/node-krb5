@@ -8,11 +8,11 @@ links = "krb5"
 
 
 [build-dependencies]
-bindgen = "0.59.2"
+bindgen = "0.63.0"
 cc = "1.0"
 
 [target.'cfg(not(windows))'.build-dependencies]
-pkg-config = "0.3.24"
+pkg-config = "0.3"
 
 [target.'cfg(any(windows))'.build-dependencies]
 winreg = { version = "0.10" }

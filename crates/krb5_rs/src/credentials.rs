@@ -6,17 +6,17 @@ use krb5_sys::{
 
 use crate::{Context, Keytab, Krb5Error, Principal, Result};
 
-pub struct Credentials<'a> {
-    pub(crate) context: &'a Context,
+pub struct Credentials<'context> {
+    pub(crate) context: &'context Context,
     pub(crate) inner: krb5_creds,
 }
 
-impl<'a> Credentials<'a> {
+impl<'context> Credentials<'context> {
     pub fn get_init_credentials_password(
-        context: &'a Context,
+        context: &'context Context,
         principal: &Principal,
         password: &str,
-    ) -> Result<Credentials<'a>> {
+    ) -> Result<Credentials<'context>> {
         let mut credentials: MaybeUninit<krb5_creds> = MaybeUninit::uninit();
         let password = CString::new(password).map_err(|_| Krb5Error::StringConversionError)?;
         let error_code = unsafe {
@@ -41,10 +41,10 @@ impl<'a> Credentials<'a> {
     }
 
     pub fn get_init_credentials_keytab(
-        context: &'a Context,
+        context: &'context Context,
         principal: &Principal,
         keytab: &Keytab,
-    ) -> Result<Credentials<'a>> {
+    ) -> Result<Credentials<'context>> {
         let mut credentials: MaybeUninit<krb5_creds> = MaybeUninit::uninit();
         let error_code = unsafe {
             krb5_get_init_creds_keytab(
@@ -66,7 +66,7 @@ impl<'a> Credentials<'a> {
     }
 }
 
-impl<'a> Drop for Credentials<'a> {
+impl<'context> Drop for Credentials<'context> {
     fn drop(&mut self) {
         if !self.context.inner.is_null() {
             unsafe { krb5_free_cred_contents(self.context.inner, &mut self.inner) }

@@ -1,4 +1,3 @@
-// use std::ops::{Deref, DerefMut};
 use std::{ffi::CStr, mem::MaybeUninit, os::raw::c_char, sync::Mutex};
 
 use crate::Result;
@@ -7,31 +6,13 @@ use krb5_sys::{
     krb5_free_error_message, krb5_get_default_realm, krb5_get_error_message, krb5_init_context,
 };
 
-use lazy_static::lazy_static;
-
 use super::Krb5Error;
 
-lazy_static! {
-    static ref CONTEXT_LOCK: Mutex<()> = Mutex::new(());
-}
+static CONTEXT_LOCK: Mutex<()> = Mutex::new(());
 
 pub struct Context {
     pub(crate) inner: krb5_context,
 }
-
-// impl Deref for Context {
-//     type Target = krb5_context;
-
-//     fn deref(&self) -> &Self::Target {
-//         &self.inner
-//     }
-// }
-
-// impl DerefMut for Context {
-//     fn deref_mut(&mut self) -> &mut Self::Target {
-//         &mut self.inner
-//     }
-// }
 
 impl Context {
     pub fn get_default_realm(&self) -> Result<String> {
@@ -73,7 +54,7 @@ impl Context {
     }
 
     pub fn new() -> Result<Context> {
-        let _guard = CONTEXT_LOCK.lock().expect("Failed to lock context");
+        let _guard = &CONTEXT_LOCK.lock().expect("Failed to lock context");
         let mut krb5_context: MaybeUninit<krb5_context> = MaybeUninit::uninit();
         let error_code = unsafe { krb5_init_context(krb5_context.as_mut_ptr()) };
         if error_code != 0 {
@@ -89,7 +70,7 @@ impl Context {
 
 impl Drop for Context {
     fn drop(&mut self) {
-        let _guard = CONTEXT_LOCK.lock().expect("Failed to lock context");
+        let _guard = &CONTEXT_LOCK.lock().expect("Failed to lock context");
         if !self.inner.is_null() {
             unsafe { krb5_free_context(self.inner) }
         }
